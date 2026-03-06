@@ -54,7 +54,7 @@ export default function ChatScreen() {
     if (isSystem) {
       return (
         <View style={styles.systemMsg}>
-          <Ionicons name="shield-checkmark" size={14} color={Colors.success} />
+          <Ionicons name="shield-checkmark" size={14} color={'#10B981'} />
           <Text style={styles.systemMsgText}>{item.content}</Text>
         </View>
       );
@@ -86,7 +86,7 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={Colors.light} />
+          <Ionicons name="arrow-back" size={22} color={'#4A5068'} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.userInfo}>
           <Avatar name={otherUser.name} size={36} online={otherUser.online} verified={otherUser.verified} />
@@ -99,10 +99,10 @@ export default function ChatScreen() {
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="call-outline" size={20} color={Colors.light} />
+            <Ionicons name="call-outline" size={20} color={'#4A5068'} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="ellipsis-vertical" size={20} color={Colors.light} />
+            <Ionicons name="ellipsis-vertical" size={20} color={'#4A5068'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -125,14 +125,14 @@ export default function ChatScreen() {
         {/* Input bar */}
         <View style={styles.inputBar}>
           <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="add-circle-outline" size={26} color={Colors.muted} />
+            <Ionicons name="add-circle-outline" size={26} color={'#8B91A8'} />
           </TouchableOpacity>
           <View style={styles.inputWrap}>
             <TextInput
               value={message}
               onChangeText={setMessage}
               placeholder="Type a message..."
-              placeholderTextColor={Colors.muted}
+              placeholderTextColor={'#8B91A8'}
               style={styles.input}
               multiline
               maxLength={2000}
@@ -148,7 +148,7 @@ export default function ChatScreen() {
                 <Ionicons name="send" size={18} color="#fff" />
               </LinearGradient>
             ) : (
-              <Ionicons name="mic-outline" size={22} color={Colors.muted} />
+              <Ionicons name="mic-outline" size={22} color={'#8B91A8'} />
             )}
           </TouchableOpacity>
         </View>
@@ -158,17 +158,17 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.base, paddingTop: Platform.OS === 'ios' ? 56 : 44,
-    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.darkBorder,
-    backgroundColor: Colors.darkCard,
+    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border,
+    backgroundColor: '#FFFFFF'Card,
   },
   backBtn: { padding: 8 },
   userInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm },
-  userName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.white },
-  userStatus: { fontSize: Fonts.sizes.xs, color: Colors.success, fontWeight: '500' },
+  userName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: '#1A1D2B' },
+  userStatus: { fontSize: Fonts.sizes.xs, color: '#10B981', fontWeight: '500' },
   headerActions: { flexDirection: 'row', gap: Spacing.sm },
   headerBtn: { padding: 8 },
   msgList: { paddingHorizontal: Spacing.base, paddingVertical: Spacing.md },
@@ -177,30 +177,30 @@ const styles = StyleSheet.create({
   msgBubble: { maxWidth: '75%', borderRadius: Radius.xl, overflow: 'hidden' },
   msgBubbleMine: {},
   msgBubbleOther: {
-    backgroundColor: Colors.darkElevated, padding: Spacing.md,
-    borderWidth: 1, borderColor: Colors.darkBorder,
+    backgroundColor: '#FFFFFF'Elevated, padding: Spacing.md,
+    borderWidth: 1, borderColor: '#FFFFFF'Border,
   },
   msgGradient: { padding: Spacing.md, borderRadius: Radius.xl },
-  msgText: { fontSize: Fonts.sizes.base, color: Colors.light, lineHeight: 22 },
+  msgText: { fontSize: Fonts.sizes.base, color: '#4A5068', lineHeight: 22 },
   systemMsg: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: Spacing.sm, marginBottom: Spacing.md,
   },
-  systemMsgText: { fontSize: Fonts.sizes.xs, color: Colors.muted },
+  systemMsgText: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
   inputBar: {
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     paddingBottom: Platform.OS === 'ios' ? 30 : Spacing.sm,
-    borderTopWidth: 1, borderTopColor: Colors.darkBorder,
-    backgroundColor: Colors.darkCard, gap: 8,
+    borderTopWidth: 1, borderTopColor: '#FFFFFF'Border,
+    backgroundColor: '#FFFFFF'Card, gap: 8,
   },
   attachBtn: { paddingBottom: 6 },
   inputWrap: {
-    flex: 1, backgroundColor: Colors.darkElevated, borderRadius: Radius.xl,
+    flex: 1, backgroundColor: '#FFFFFF'Elevated, borderRadius: Radius.xl,
     paddingHorizontal: Spacing.base, paddingVertical: 8,
-    borderWidth: 1, borderColor: Colors.darkBorder, maxHeight: 120,
+    borderWidth: 1, borderColor: '#FFFFFF'Border, maxHeight: 120,
   },
-  input: { fontSize: Fonts.sizes.base, color: Colors.white, maxHeight: 100 },
+  input: { fontSize: Fonts.sizes.base, color: '#1A1D2B', maxHeight: 100 },
   sendBtn: { paddingBottom: 4 },
   sendBtnActive: {},
   sendGradient: {

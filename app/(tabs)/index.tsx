@@ -1,124 +1,126 @@
 import React, { useState } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  RefreshControl, Dimensions, FlatList, Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Colors, Fonts, Spacing, Radius, APP_CONFIG } from '@/constants/theme';
-import { useAuthStore, useTaskStore } from '@/context/stores';
-import { Button, Card, SectionHeader, Avatar } from '@/components/UI';
-import { TaskCard, ServiceCard } from '@/components/Cards';
+import { useAuthStore } from '@/context/stores';
 
+const isWeb = Platform.OS === 'web';
 const { width } = Dimensions.get('window');
+const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', gold: '#F59E0B' };
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { fetchTasks } = useTaskStore();
-  const [refreshing, setRefreshing] = useState(false);
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; };
 
-  const mockTasks = [
-    {
-      id: '1', title: 'Need help with Calculus II integration problems',
-      description: 'I have 15 integration problems from my Calculus II class. Need step-by-step solutions.',
-      category: 'math', budget: 35, deadline: new Date(Date.now() + 86400000 * 2).toISOString(),
-      status: 'open' as const, bidsCount: 7, createdAt: new Date(Date.now() - 3600000).toISOString(),
-      student: { id: '1', name: 'Sarah K.', role: 'student' as const, createdAt: '' }, studentId: '1',
-    },
-    {
-      id: '2', title: 'Python data analysis project — Pandas & Matplotlib',
-      description: 'Complete data analysis project using Python.',
-      category: 'cs', budget: 75, deadline: new Date(Date.now() + 86400000 * 5).toISOString(),
-      status: 'open' as const, bidsCount: 12, createdAt: new Date(Date.now() - 7200000).toISOString(),
-      student: { id: '2', name: 'James M.', role: 'student' as const, createdAt: '' }, studentId: '2',
-    },
+  const tasks = [
+    { id: '1', title: 'Need help with Calculus II integration problems', category: 'Math', budget: 35, bids: 7, time: '2h ago', status: 'Open' },
+    { id: '2', title: 'Python data analysis project — Pandas & Matplotlib', category: 'CS', budget: 75, bids: 12, time: '4h ago', status: 'Open' },
+    { id: '3', title: 'Essay on Renaissance art movements — 2000 words', category: 'Humanities', budget: 50, bids: 4, time: '1h ago', status: 'Open' },
   ];
-
-  const mockServices = [
-    {
-      id: '1', title: 'Expert Math Tutoring & Problem Solving',
-      description: 'PhD math student. I solve any level math problems with clear step-by-step explanations.',
-      category: 'math', price: 15, deliveryDays: 1,
-      helper: { id: '10', name: 'Dr. Chen', role: 'helper' as const, rating: 4.9, totalReviews: 234, createdAt: '' },
-    },
-  ];
-
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {}} tintColor={Colors.primary} />}
-      >
-        <LinearGradient colors={['#0A0F1E', '#151B2E', '#0A0F1E']} style={styles.hero}>
-          <View style={styles.topBar}>
-            <View>
-              <Text style={styles.greeting}>{greeting()}</Text>
-              <Text style={styles.userName}>{user?.name || 'Student'}</Text>
-            </View>
-            <View style={styles.topActions}>
-              <TouchableOpacity style={styles.notifBtn}>
-                <Ionicons name="notifications-outline" size={24} color={Colors.light} />
-                <View style={styles.notifDot} />
-              </TouchableOpacity>
-              <Avatar name={user?.name || 'U'} size={40} online />
-            </View>
+    <ScrollView style={s.page} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={s.header}>
+        <View>
+          <Text style={s.greeting}>{greeting()}</Text>
+          <Text style={[s.name, isWeb && { fontFamily: "'Bricolage Grotesque', sans-serif" }]}>{user?.name || 'Student'}</Text>
+        </View>
+        <View style={s.headerRight}>
+          <TouchableOpacity style={s.iconBtn}><Ionicons name="notifications-outline" size={22} color={C.textSoft} /></TouchableOpacity>
+          <View style={s.avatar}><Text style={s.avatarText}>{(user?.name || 'U')[0]}</Text></View>
+        </View>
+      </View>
+
+      {/* Search */}
+      <TouchableOpacity style={s.searchBar} onPress={() => router.push('/explore')}>
+        <Ionicons name="search-outline" size={20} color={C.textMuted} />
+        <Text style={s.searchText}>Search tasks, helpers, subjects...</Text>
+      </TouchableOpacity>
+
+      {/* Quick actions */}
+      <View style={s.actionsRow}>
+        <TouchableOpacity style={s.actionCard} onPress={() => router.push('/create-task')}>
+          <View style={[s.actionIcon, { backgroundColor: C.primarySoft }]}><Ionicons name="add-circle-outline" size={24} color={C.primary} /></View>
+          <Text style={s.actionLabel}>Post Task</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.actionCard} onPress={() => router.push('/explore')}>
+          <View style={[s.actionIcon, { backgroundColor: '#ECFDF5' }]}><Ionicons name="people-outline" size={24} color={C.accent} /></View>
+          <Text style={s.actionLabel}>Find Experts</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.actionCard} onPress={() => router.push('/orders')}>
+          <View style={[s.actionIcon, { backgroundColor: '#FFFBEB' }]}><Ionicons name="briefcase-outline" size={24} color={C.gold} /></View>
+          <Text style={s.actionLabel}>My Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.actionCard} onPress={() => router.push('/payment')}>
+          <View style={[s.actionIcon, { backgroundColor: '#FEF2F2' }]}><Ionicons name="wallet-outline" size={24} color="#EF4444" /></View>
+          <Text style={s.actionLabel}>Wallet</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Stats */}
+      <View style={s.statsRow}>
+        <View style={s.statCard}><Text style={s.statVal}>3</Text><Text style={s.statLbl}>Active</Text></View>
+        <View style={s.statCard}><Text style={s.statVal}>12</Text><Text style={s.statLbl}>Completed</Text></View>
+        <View style={s.statCard}><Text style={s.statVal}>$450</Text><Text style={s.statLbl}>Spent</Text></View>
+        <View style={s.statCard}><Text style={s.statVal}>4.8</Text><Text style={s.statLbl}>Rating</Text></View>
+      </View>
+
+      {/* Latest tasks */}
+      <View style={s.sectionHead}>
+        <Text style={s.sectionTitle}>Latest Tasks</Text>
+        <TouchableOpacity onPress={() => router.push('/explore')}><Text style={s.seeAll}>See all</Text></TouchableOpacity>
+      </View>
+      {tasks.map((t) => (
+        <TouchableOpacity key={t.id} style={s.taskCard} onPress={() => router.push(`/task/${t.id}`)}>
+          <View style={s.taskTop}>
+            <View style={s.taskBadge}><Text style={s.taskBadgeText}>{t.status}</Text></View>
+            <Text style={s.taskCat}>{t.category}</Text>
           </View>
-
-          <Card variant="glass" style={styles.heroCard}>
-            <Text style={styles.heroCardTitle}>What do you need help with?</Text>
-            <TouchableOpacity style={styles.heroSearch} onPress={() => router.push('/explore')}>
-              <Ionicons name="search" size={20} color={Colors.muted} />
-              <Text style={styles.heroSearchText}>Search tasks, helpers, subjects...</Text>
-            </TouchableOpacity>
-            <View style={styles.heroActions}>
-              <Button title="Post a Task" onPress={() => router.push('/create-task')} icon="add-circle-outline" size="sm" />
-              <Button title="Browse Helpers" onPress={() => router.push('/explore')} variant="secondary" icon="people-outline" size="sm" />
-            </View>
-          </Card>
-        </LinearGradient>
-
-        <SectionHeader title="Latest Tasks" action={{ label: 'See All', onPress: () => router.push('/explore') }} />
-        {mockTasks.map((task) => (
-          <TaskCard key={task.id} task={task} onPress={() => router.push(`/task/${task.id}`)} />
-        ))}
-
-        <SectionHeader title="Top Rated Helpers" action={{ label: 'View All', onPress: () => router.push('/explore') }} />
-        <FlatList
-          horizontal data={mockServices} keyExtractor={(item) => item.id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: Spacing.base }}
-          renderItem={({ item }) => <ServiceCard service={item} onPress={() => router.push(`/service/${item.id}`)} />}
-        />
-        <View style={{ height: 40 }} />
-      </ScrollView>
-    </View>
+          <Text style={s.taskTitle}>{t.title}</Text>
+          <View style={s.taskBottom}>
+            <Text style={s.taskMeta}><Ionicons name="chatbubble-outline" size={12} color={C.textMuted} /> {t.bids} bids</Text>
+            <Text style={s.taskMeta}>{t.time}</Text>
+            <View style={s.taskBudget}><Text style={s.taskBudgetText}>${t.budget}</Text></View>
+          </View>
+        </TouchableOpacity>
+      ))}
+      <View style={{ height: 32 }} />
+    </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
-  hero: { paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.lg, paddingHorizontal: Spacing.lg },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl },
-  greeting: { fontSize: Fonts.sizes.sm, color: Colors.subtle, fontWeight: '500' },
-  userName: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.white, letterSpacing: -0.5 },
-  topActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  notifBtn: { position: 'relative', padding: 4 },
-  notifDot: { position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.error },
-  heroCard: { marginTop: Spacing.sm },
-  heroCardTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.white, marginBottom: Spacing.md },
-  heroSearch: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.darkElevated,
-    borderRadius: Radius.lg, paddingHorizontal: Spacing.base, paddingVertical: Spacing.md,
-    marginBottom: Spacing.base, borderWidth: 1, borderColor: Colors.darkBorder,
-  },
-  heroSearchText: { fontSize: Fonts.sizes.sm, color: Colors.muted, marginLeft: Spacing.sm },
-  heroActions: { flexDirection: 'row', gap: Spacing.md },
+const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: C.bg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: 12 },
+  greeting: { fontSize: 13, color: C.textMuted },
+  name: { fontSize: 22, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.bgSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 20, marginVertical: 12, backgroundColor: C.bgSoft, borderRadius: 12, paddingHorizontal: 16, height: 48, borderWidth: 1, borderColor: C.border },
+  searchText: { fontSize: 14, color: C.textMuted },
+  actionsRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
+  actionCard: { flex: 1, alignItems: 'center', gap: 8 },
+  actionIcon: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  actionLabel: { fontSize: 11, fontWeight: '600', color: C.textSoft },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 8, marginBottom: 20 },
+  statCard: { flex: 1, backgroundColor: C.bgSoft, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border },
+  statVal: { fontSize: 20, fontWeight: '800', color: C.text },
+  statLbl: { fontSize: 11, color: C.textMuted, marginTop: 2 },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  seeAll: { fontSize: 13, color: C.primary, fontWeight: '600' },
+  taskCard: { marginHorizontal: 20, marginBottom: 12, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, borderRadius: 16, padding: 18 },
+  taskTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  taskBadge: { backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 100 },
+  taskBadgeText: { fontSize: 11, fontWeight: '700', color: C.accent },
+  taskCat: { fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1 },
+  taskTitle: { fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 22, marginBottom: 10 },
+  taskBottom: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  taskMeta: { fontSize: 12, color: C.textMuted },
+  taskBudget: { marginLeft: 'auto', backgroundColor: C.primarySoft, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
+  taskBudgetText: { fontSize: 14, fontWeight: '800', color: C.primary },
 });

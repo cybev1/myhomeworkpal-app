@@ -1,175 +1,52 @@
-import React, { useState } from 'react';
-import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Platform,
-} from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
-import { ConversationItem } from '@/components/Cards';
-import { EmptyState } from '@/components/UI';
+const isWeb = Platform.OS === 'web';
+const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', accent: '#10B981' };
 
 export default function MessagesScreen() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const mockConversations = [
-    {
-      id: '1',
-      participant: { id: '10', name: 'Dr. Chen', role: 'helper' as const, createdAt: '', verified: true },
-      lastMessage: { content: 'I\'ve started working on the integration problems. Should be done by tonight!', createdAt: new Date(Date.now() - 600000).toISOString() },
-      unreadCount: 2,
-      updatedAt: new Date(Date.now() - 600000).toISOString(),
-    },
-    {
-      id: '2',
-      participant: { id: '11', name: 'Alex R.', role: 'helper' as const, createdAt: '' },
-      lastMessage: { content: 'The Python project is ready for review. Check the attached files.', createdAt: new Date(Date.now() - 3600000).toISOString() },
-      unreadCount: 0,
-      updatedAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: '3',
-      participant: { id: '12', name: 'Prof. Williams', role: 'helper' as const, createdAt: '' },
-      lastMessage: { content: 'Thank you for the 5-star review! Happy to help anytime.', createdAt: new Date(Date.now() - 86400000).toISOString() },
-      unreadCount: 0,
-      updatedAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: '4',
-      participant: { id: '5', name: 'Support Team', role: 'admin' as const, createdAt: '' },
-      lastMessage: { content: 'Welcome to MyHomeworkPal! Let us know if you need anything.', createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
-      unreadCount: 1,
-      updatedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    },
+  const convos = [
+    { id: '1', name: 'Dr. Chen', msg: "I've started working on the integration problems!", time: '10m ago', unread: 2 },
+    { id: '2', name: 'Alex R.', msg: 'The Python project is ready for review.', time: '1h ago', unread: 0 },
+    { id: '3', name: 'Prof. Williams', msg: 'Thank you for the 5-star review!', time: '1d ago', unread: 0 },
   ];
-
-  const filtered = searchQuery
-    ? mockConversations.filter((c) =>
-        c.participant.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : mockConversations;
-
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.composeBtn}>
-          <Ionicons name="create-outline" size={22} color={Colors.primary} />
-        </TouchableOpacity>
+    <View style={s.page}>
+      <View style={s.header}>
+        <Text style={[s.title, isWeb && { fontFamily: "'Bricolage Grotesque', sans-serif" }]}>Messages</Text>
       </View>
-
-      {/* Search */}
-      <View style={styles.searchWrap}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={Colors.muted} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search conversations..."
-            placeholderTextColor={Colors.muted}
-            style={styles.searchInput}
-          />
-        </View>
-      </View>
-
-      {/* Online helpers */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.onlineRow}>
-        {mockConversations.map((conv) => (
-          <TouchableOpacity key={conv.id} style={styles.onlineItem}>
-            <View style={styles.onlineAvatar}>
-              <Text style={styles.onlineInitials}>
-                {conv.participant.name.split(' ').map(n => n[0]).join('')}
-              </Text>
-              <View style={styles.onlineDot} />
+      <ScrollView>
+        {convos.map((c) => (
+          <TouchableOpacity key={c.id} style={s.row} onPress={() => router.push(`/chat/${c.id}`)}>
+            <View style={s.av}><Text style={s.avText}>{c.name.split(' ').map(n=>n[0]).join('')}</Text><View style={s.online} /></View>
+            <View style={s.content}>
+              <View style={s.top}><Text style={s.name}>{c.name}</Text><Text style={s.time}>{c.time}</Text></View>
+              <View style={s.bottom}><Text style={s.msg} numberOfLines={1}>{c.msg}</Text>
+                {c.unread > 0 && <View style={s.badge}><Text style={s.badgeText}>{c.unread}</Text></View>}
+              </View>
             </View>
-            <Text style={styles.onlineName} numberOfLines={1}>
-              {conv.participant.name.split(' ')[0]}
-            </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
-
-      {/* Conversations */}
-      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon="chatbubbles-outline"
-            title="No conversations"
-            message="Start chatting with helpers when you post a task"
-          />
-        ) : (
-          filtered.map((conv) => (
-            <ConversationItem
-              key={conv.id}
-              conversation={conv}
-              onPress={() => router.push(`/chat/${conv.id}`)}
-            />
-          ))
-        )}
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? 60 : 48,
-    paddingBottom: Spacing.md,
-  },
-  headerTitle: { fontSize: Fonts.sizes['2xl'], fontWeight: '800', color: Colors.white, letterSpacing: -0.5 },
-  composeBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(108,92,231,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchWrap: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.darkCard,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.base,
-    height: 44,
-    borderWidth: 1,
-    borderColor: Colors.darkBorder,
-  },
-  searchInput: {
-    flex: 1,
-    color: Colors.white,
-    fontSize: Fonts.sizes.sm,
-    marginLeft: Spacing.sm,
-  },
-  onlineRow: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.darkBorder,
-  },
-  onlineItem: { alignItems: 'center', width: 60 },
-  onlineAvatar: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  onlineInitials: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  onlineDot: {
-    position: 'absolute',
-    bottom: 0, right: 0,
-    width: 14, height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.online,
-    borderWidth: 2,
-    borderColor: Colors.dark,
-  },
-  onlineName: { fontSize: 11, color: Colors.subtle, marginTop: 4, fontWeight: '500' },
+const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: C.bg },
+  header: { paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: 12 },
+  title: { fontSize: 24, fontWeight: '800', color: C.text },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+  av: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  avText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  online: { position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, borderRadius: 7, backgroundColor: C.accent, borderWidth: 2, borderColor: C.bg },
+  content: { flex: 1, marginLeft: 14 },
+  top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  name: { fontSize: 15, fontWeight: '600', color: C.text },
+  time: { fontSize: 12, color: C.textMuted },
+  bottom: { flexDirection: 'row', alignItems: 'center' },
+  msg: { flex: 1, fontSize: 13, color: C.textMuted },
+  badge: { width: 20, height: 20, borderRadius: 10, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
 });

@@ -14,7 +14,7 @@ export default function ProfileScreen() {
     <View style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={Colors.light} />
+          <Ionicons name="arrow-back" size={22} color={'#4A5068'} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Profile</Text>
         <View style={{ width: 40 }} />
@@ -52,14 +52,14 @@ export default function ProfileScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.darkElevated, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.white },
-  name: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.white, marginTop: Spacing.md },
-  meta: { fontSize: Fonts.sizes.sm, color: Colors.muted },
-  bio: { fontSize: Fonts.sizes.base, color: Colors.subtle, lineHeight: 24, textAlign: 'center', marginTop: Spacing.lg, marginBottom: Spacing.lg },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
+  name: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#1A1D2B', marginTop: Spacing.md },
+  meta: { fontSize: Fonts.sizes.sm, color: '#8B91A8' },
+  bio: { fontSize: Fonts.sizes.base, color: '#6B7280', lineHeight: 24, textAlign: 'center', marginTop: Spacing.lg, marginBottom: Spacing.lg },
   statsCard: { width: '100%', marginTop: Spacing.md },
-  statVal: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.white },
-  statLbl: { fontSize: Fonts.sizes.xs, color: Colors.muted, marginTop: 2 },
+  statVal: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#1A1D2B' },
+  statLbl: { fontSize: Fonts.sizes.xs, color: '#8B91A8', marginTop: 2 },
 });

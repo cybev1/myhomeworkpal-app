@@ -50,11 +50,11 @@ export default function TaskDetailScreen() {
       {/* Sticky header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={Colors.light} />
+          <Ionicons name="arrow-back" size={22} color={'#4A5068'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Task Details</Text>
         <TouchableOpacity style={styles.moreBtn}>
-          <Ionicons name="ellipsis-horizontal" size={22} color={Colors.light} />
+          <Ionicons name="ellipsis-horizontal" size={22} color={'#4A5068'} />
         </TouchableOpacity>
       </View>
 
@@ -71,17 +71,17 @@ export default function TaskDetailScreen() {
           {/* Quick stats */}
           <View style={styles.quickStats}>
             <View style={styles.quickStat}>
-              <Ionicons name="cash-outline" size={18} color={Colors.primaryLight} />
+              <Ionicons name="cash-outline" size={18} color={'#4F46E5'Light} />
               <Text style={styles.quickStatLabel}>Budget</Text>
               <Text style={styles.quickStatValue}>${task.budget}</Text>
             </View>
             <View style={styles.quickStat}>
-              <Ionicons name="time-outline" size={18} color={Colors.accent} />
+              <Ionicons name="time-outline" size={18} color={'#06B6D4'} />
               <Text style={styles.quickStatLabel}>Deadline</Text>
               <Text style={styles.quickStatValue}>2 days</Text>
             </View>
             <View style={styles.quickStat}>
-              <Ionicons name="chatbubbles-outline" size={18} color={Colors.warning} />
+              <Ionicons name="chatbubbles-outline" size={18} color={'#F59E0B'} />
               <Text style={styles.quickStatLabel}>Bids</Text>
               <Text style={styles.quickStatValue}>{task.bidsCount}</Text>
             </View>
@@ -93,9 +93,9 @@ export default function TaskDetailScreen() {
               <Text style={styles.filesTitle}>Attachments</Text>
               {task.files.map((file, idx) => (
                 <TouchableOpacity key={idx} style={styles.fileItem}>
-                  <Ionicons name="document-outline" size={20} color={Colors.primary} />
+                  <Ionicons name="document-outline" size={20} color={'#4F46E5'} />
                   <Text style={styles.fileName}>{file}</Text>
-                  <Ionicons name="download-outline" size={18} color={Colors.muted} />
+                  <Ionicons name="download-outline" size={18} color={'#8B91A8'} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -116,7 +116,7 @@ export default function TaskDetailScreen() {
                 </View>
               </View>
               <TouchableOpacity style={styles.msgBtn}>
-                <Ionicons name="chatbubble-outline" size={18} color={Colors.primary} />
+                <Ionicons name="chatbubble-outline" size={18} color={'#4F46E5'} />
               </TouchableOpacity>
             </View>
           </Card>
@@ -138,7 +138,7 @@ export default function TaskDetailScreen() {
       {/* Floating bid/action bar */}
       <View style={styles.floatingBar}>
         <LinearGradient
-          colors={['transparent', Colors.dark, Colors.dark]}
+          colors={['transparent', '#FFFFFF', '#FFFFFF']}
           style={styles.floatingGradient}
         >
           <View style={styles.floatingContent}>
@@ -160,63 +160,63 @@ export default function TaskDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48,
-    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.darkBorder,
-    backgroundColor: Colors.dark,
+    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border,
+    backgroundColor: '#FFFFFF',
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.darkElevated, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.white },
+  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
   moreBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.darkElevated, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center',
   },
   taskSection: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.lg },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.md },
-  categoryTag: { fontSize: 10, fontWeight: '800', color: Colors.muted, letterSpacing: 1.5 },
-  taskTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.white, lineHeight: 30, marginBottom: Spacing.md },
-  taskDesc: { fontSize: Fonts.sizes.base, color: Colors.subtle, lineHeight: 24 },
+  categoryTag: { fontSize: 10, fontWeight: '800', color: '#8B91A8', letterSpacing: 1.5 },
+  taskTitle: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#1A1D2B', lineHeight: 30, marginBottom: Spacing.md },
+  taskDesc: { fontSize: Fonts.sizes.base, color: '#6B7280', lineHeight: 24 },
   quickStats: {
     flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xl,
-    backgroundColor: Colors.darkCard, borderRadius: Radius.xl, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.darkBorder,
+    backgroundColor: '#FFFFFF'Card, borderRadius: Radius.xl, padding: Spacing.base,
+    borderWidth: 1, borderColor: '#FFFFFF'Border,
   },
   quickStat: { flex: 1, alignItems: 'center', gap: 4 },
-  quickStatLabel: { fontSize: Fonts.sizes.xs, color: Colors.muted },
-  quickStatValue: { fontSize: Fonts.sizes.md, fontWeight: '800', color: Colors.white },
+  quickStatLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
+  quickStatValue: { fontSize: Fonts.sizes.md, fontWeight: '800', color: '#1A1D2B' },
   filesSection: { marginTop: Spacing.lg },
-  filesTitle: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.subtle, marginBottom: Spacing.sm },
+  filesTitle: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: '#6B7280', marginBottom: Spacing.sm },
   fileItem: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    backgroundColor: Colors.darkCard, borderRadius: Radius.md, padding: Spacing.md,
-    borderWidth: 1, borderColor: Colors.darkBorder,
+    backgroundColor: '#FFFFFF'Card, borderRadius: Radius.md, padding: Spacing.md,
+    borderWidth: 1, borderColor: '#FFFFFF'Border,
   },
-  fileName: { flex: 1, fontSize: Fonts.sizes.sm, color: Colors.light },
+  fileName: { flex: 1, fontSize: Fonts.sizes.sm, color: '#4A5068' },
   section: { marginTop: Spacing.sm },
   sectionTitle: {
-    fontSize: Fonts.sizes.sm, fontWeight: '700', color: Colors.muted,
+    fontSize: Fonts.sizes.sm, fontWeight: '700', color: '#8B91A8',
     letterSpacing: 0.5, paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm,
   },
   studentCard: { marginHorizontal: Spacing.base },
   studentRow: { flexDirection: 'row', alignItems: 'center' },
-  studentName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.white },
-  studentMeta: { fontSize: Fonts.sizes.xs, color: Colors.muted },
+  studentName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: '#1A1D2B' },
+  studentMeta: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
   msgBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(108,92,231,0.12)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(79,70,229,0.08)', alignItems: 'center', justifyContent: 'center',
   },
   floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   floatingGradient: { paddingTop: Spacing['3xl'] },
   floatingContent: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingBottom: Platform.OS === 'ios' ? 34 : 16, paddingTop: Spacing.md,
-    backgroundColor: Colors.dark, borderTopWidth: 1, borderTopColor: Colors.darkBorder,
+    backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#FFFFFF'Border,
   },
-  floatingLabel: { fontSize: Fonts.sizes.xs, color: Colors.muted },
-  floatingPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primaryLight },
+  floatingLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
+  floatingPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#4F46E5'Light },
 });

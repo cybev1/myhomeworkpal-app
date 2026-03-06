@@ -17,7 +17,7 @@ export default function CreateServiceScreen() {
     <View style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.closeBtn}>
-          <Ionicons name="close" size={24} color={Colors.light} />
+          <Ionicons name="close" size={24} color={'#4A5068'} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Create a Service</Text>
         <View style={{ width: 40 }} />
@@ -29,7 +29,7 @@ export default function CreateServiceScreen() {
         <View style={s.catGrid}>
           {APP_CONFIG.categories.map((cat) => (
             <TouchableOpacity key={cat.id} onPress={() => setCategory(cat.id)} style={[s.catChip, category === cat.id && { borderColor: cat.color, backgroundColor: `${cat.color}12` }]}>
-              <Text style={[s.catText, category === cat.id && { color: Colors.white }]}>{cat.label}</Text>
+              <Text style={[s.catText, category === cat.id && { color: '#1A1D2B' }]}>{cat.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -43,12 +43,12 @@ export default function CreateServiceScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.dark },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.darkBorder },
-  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.darkElevated, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.white },
-  label: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.subtle, marginBottom: Spacing.sm, marginTop: Spacing.sm },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border },
+  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
+  label: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: '#6B7280', marginBottom: Spacing.sm, marginTop: Spacing.sm },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.lg },
-  catChip: { paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.darkBorder, backgroundColor: Colors.darkCard },
-  catText: { fontSize: Fonts.sizes.sm, color: Colors.muted, fontWeight: '500' },
+  catChip: { paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, borderWidth: 1, borderColor: '#FFFFFF'Border, backgroundColor: '#FFFFFF'Card },
+  catText: { fontSize: Fonts.sizes.sm, color: '#8B91A8', fontWeight: '500' },
 });
