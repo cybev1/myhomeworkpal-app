@@ -50,7 +50,7 @@ export default function ServiceDetailScreen() {
               <Text style={s.statLbl}>Revisions</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Ionicons name="star" size={20} color={'#06B6D4'Gold} />
+              <Ionicons name="star" size={20} color={'#F59E0B'} />
               <Text style={s.statVal}>4.9</Text>
               <Text style={s.statLbl}>Rating</Text>
             </View>
@@ -84,5 +84,5 @@ const s = StyleSheet.create({
   statLbl: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
   floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Platform.OS === 'ios' ? 34 : 16, backgroundColor: '#F7F8FC', borderTopWidth: 1, borderTopColor: '#E4E7F0' },
   priceLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
-  price: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#4F46E5'Light },
+  price: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#6366F1' },
 });

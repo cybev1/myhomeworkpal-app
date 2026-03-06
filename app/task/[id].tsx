@@ -71,7 +71,7 @@ export default function TaskDetailScreen() {
           {/* Quick stats */}
           <View style={styles.quickStats}>
             <View style={styles.quickStat}>
-              <Ionicons name="cash-outline" size={18} color={'#4F46E5'Light} />
+              <Ionicons name="cash-outline" size={18} color={'#6366F1'} />
               <Text style={styles.quickStatLabel}>Budget</Text>
               <Text style={styles.quickStatValue}>${task.budget}</Text>
             </View>
@@ -218,5 +218,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E4E7F0',
   },
   floatingLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
-  floatingPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#4F46E5'Light },
+  floatingPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#6366F1' },
 });
