@@ -22,6 +22,7 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [role, setRole] = useState<'student' | 'helper'>('student');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -107,7 +108,10 @@ export default function RegisterScreen() {
               <Ionicons name="lock-closed-outline" size={18} color={C.textMuted} />
               <TextInput value={password} onChangeText={(t) => { setPassword(t); setErrors({ ...errors, password: '' }); }}
                 placeholder="Min 8 characters" placeholderTextColor={C.textMuted}
-                secureTextEntry style={s.input} />
+                secureTextEntry={!showPw} style={s.input} />
+              <TouchableOpacity onPress={() => setShowPw(!showPw)}>
+                <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.textMuted} />
+              </TouchableOpacity>
             </View>
             {errors.password ? <Text style={s.errorText}>{errors.password}</Text> : null}
 
