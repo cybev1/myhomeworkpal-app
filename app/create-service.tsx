@@ -44,11 +44,11 @@ export default function CreateServiceScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border },
-  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#E4E7F0' },
+  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F2F8', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
   label: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: '#6B7280', marginBottom: Spacing.sm, marginTop: Spacing.sm },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.lg },
-  catChip: { paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, borderWidth: 1, borderColor: '#FFFFFF'Border, backgroundColor: '#FFFFFF'Card },
+  catChip: { paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: Radius.full, borderWidth: 1, borderColor: '#E4E7F0', backgroundColor: '#F7F8FC' },
   catText: { fontSize: Fonts.sizes.sm, color: '#8B91A8', fontWeight: '500' },
 });

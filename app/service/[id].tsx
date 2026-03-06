@@ -71,10 +71,10 @@ export default function ServiceDetailScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#E4E7F0' },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F2F8', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
-  shareBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center' },
+  shareBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F2F8', alignItems: 'center', justifyContent: 'center' },
   helperRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xl },
   helperName: { fontSize: Fonts.sizes.lg, fontWeight: '800', color: '#1A1D2B' },
   meta: { fontSize: Fonts.sizes.xs, color: '#8B91A8', marginTop: 2 },
@@ -82,7 +82,7 @@ const s = StyleSheet.create({
   desc: { fontSize: Fonts.sizes.base, color: '#6B7280', lineHeight: 24 },
   statVal: { fontSize: Fonts.sizes.md, fontWeight: '800', color: '#1A1D2B', marginTop: 4 },
   statLbl: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
-  floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Platform.OS === 'ios' ? 34 : 16, backgroundColor: '#FFFFFF'Card, borderTopWidth: 1, borderTopColor: '#FFFFFF'Border },
+  floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Platform.OS === 'ios' ? 34 : 16, backgroundColor: '#F7F8FC', borderTopWidth: 1, borderTopColor: '#E4E7F0' },
   priceLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
   price: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#4F46E5'Light },
 });

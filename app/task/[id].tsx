@@ -164,17 +164,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingTop: Platform.OS === 'ios' ? 60 : 48,
-    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#FFFFFF'Border,
+    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#E4E7F0',
     backgroundColor: '#FFFFFF',
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F0F2F8', alignItems: 'center', justifyContent: 'center',
   },
   headerTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: '#1A1D2B' },
   moreBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#FFFFFF'Elevated, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F0F2F8', alignItems: 'center', justifyContent: 'center',
   },
   taskSection: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.lg },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.md },
@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
   taskDesc: { fontSize: Fonts.sizes.base, color: '#6B7280', lineHeight: 24 },
   quickStats: {
     flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xl,
-    backgroundColor: '#FFFFFF'Card, borderRadius: Radius.xl, padding: Spacing.base,
-    borderWidth: 1, borderColor: '#FFFFFF'Border,
+    backgroundColor: '#F7F8FC', borderRadius: Radius.xl, padding: Spacing.base,
+    borderWidth: 1, borderColor: '#E4E7F0',
   },
   quickStat: { flex: 1, alignItems: 'center', gap: 4 },
   quickStatLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
   filesTitle: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: '#6B7280', marginBottom: Spacing.sm },
   fileItem: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    backgroundColor: '#FFFFFF'Card, borderRadius: Radius.md, padding: Spacing.md,
-    borderWidth: 1, borderColor: '#FFFFFF'Border,
+    backgroundColor: '#F7F8FC', borderRadius: Radius.md, padding: Spacing.md,
+    borderWidth: 1, borderColor: '#E4E7F0',
   },
   fileName: { flex: 1, fontSize: Fonts.sizes.sm, color: '#4A5068' },
   section: { marginTop: Spacing.sm },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   floatingContent: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingBottom: Platform.OS === 'ios' ? 34 : 16, paddingTop: Spacing.md,
-    backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#FFFFFF'Border,
+    backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E4E7F0',
   },
   floatingLabel: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
   floatingPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: '#4F46E5'Light },
