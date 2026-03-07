@@ -160,3 +160,96 @@ class Order(Base):
     revision_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    task = relationship("Task", back_populates="order")
+    student = relationship("User", foreign_keys=[student_id])
+    helper = relationship("User", foreign_keys=[helper_id])
+    review = relationship("Review", back_populates="order", uselist=False)
+    payment = relationship("Payment", back_populates="order", uselist=False)
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    amount = Column(Float, nullable=False)
+    status = Column(String(20), default=PaymentStatus.pending)
+    stripe_payment_intent_id = Column(String(255))
+    order_id = Column(String, ForeignKey("orders.id"), nullable=False)
+    payer_id = Column(String, ForeignKey("users.id"), nullable=False)
+    payee_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    order = relationship("Order", back_populates="payment")
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    rating = Column(Integer, nullable=False)
+    comment = Column(Text)
+    order_id = Column(String, ForeignKey("orders.id"), nullable=False)
+    reviewer_id = Column(String, ForeignKey("users.id"), nullable=False)
+    reviewee_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    order = relationship("Order", back_populates="review")
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user1_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user2_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    messages = relationship("Message", back_populates="conversation", order_by="Message.created_at")
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    content = Column(Text, nullable=False)
+    type = Column(String(20), default="text")
+    sender_id = Column(String, ForeignKey("users.id"), nullable=False)
+    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
+    read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    conversation = relationship("Conversation", back_populates="messages")
+
+class FeedPost(Base):
+    __tablename__ = "feed_posts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    content = Column(Text, nullable=False)
+    author_id = Column(String, ForeignKey("users.id"), nullable=False)
+    likes_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Follow(Base):
+    __tablename__ = "follows"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    follower_id = Column(String, ForeignKey("users.id"), nullable=False)
+    following_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+# ═══════════════════════════════════════
+# DB INIT
+# ═══════════════════════════════════════
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def get_db():
+    async with async_session() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()

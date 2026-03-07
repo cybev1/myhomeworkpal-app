@@ -40,7 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Catch all errors and still return CORS headers
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     print(f"ERROR: {type(exc).__name__}: {str(exc)}")
