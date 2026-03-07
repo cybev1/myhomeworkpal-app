@@ -159,4 +159,4 @@ class Order(Base):
     delivery_files = Column(Text)
     revision_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = C
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
