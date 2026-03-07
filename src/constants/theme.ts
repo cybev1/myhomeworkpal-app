@@ -3,40 +3,52 @@
 // Inspired by: Upwork meets Linear meets Stripe
 
 export const Colors = {
-  // Core palette
-  primary: '#6C5CE7',       // Electric violet
-  primaryLight: '#A29BFE',  // Soft violet
-  primaryDark: '#5A4BD1',   // Deep violet
-  accent: '#00D2FF',        // Cyan spark
-  accentGold: '#FFD93D',    // Achievement gold
-  success: '#00E676',       // Mint success
-  warning: '#FF9100',       // Amber warning
-  error: '#FF5252',         // Coral error
+  // Core palette — Clean white professional theme
+  primary: '#4F46E5',       // Indigo
+  primaryLight: '#818CF8',  // Light indigo
+  primarySoft: '#EEF0FF',   // Indigo tint
+  primaryDark: '#3730A3',   // Deep indigo
+  accent: '#10B981',        // Emerald
+  accentSoft: '#ECFDF5',    // Emerald tint
+  accentGold: '#F59E0B',    // Amber gold
+  success: '#10B981',       // Emerald success
+  warning: '#F59E0B',       // Amber warning
+  error: '#EF4444',         // Red error
+  cyan: '#06B6D4',          // Cyan
 
-  // Neutrals — cool-toned
-  dark: '#0A0F1E',          // Deep navy
-  darkCard: '#111827',      // Card surface
-  darkElevated: '#1A2332',  // Elevated surface
-  darkBorder: '#2A3441',    // Subtle borders
-  muted: '#64748B',         // Muted text
-  subtle: '#94A3B8',        // Subtle elements
-  light: '#CBD5E1',         // Light text
-  white: '#F8FAFC',         // Off-white
+  // Neutrals — white professional
+  bg: '#FFFFFF',             // White background
+  bgSoft: '#F7F8FC',        // Soft grey background
+  bgMuted: '#F0F2F8',       // Muted background
+  text: '#1A1D2B',          // Deep text
+  textSoft: '#4A5068',      // Secondary text
+  textMuted: '#8B91A8',     // Muted text
+  border: '#E4E7F0',        // Light borders
+  white: '#FFFFFF',
   pureWhite: '#FFFFFF',
 
+  // Legacy aliases (for components that still reference old names)
+  dark: '#1A1D2B',
+  darkCard: '#FFFFFF',
+  darkElevated: '#F7F8FC',
+  darkBorder: '#E4E7F0',
+  muted: '#8B91A8',
+  subtle: '#6B7280',
+  light: '#4A5068',
+
   // Semantic
-  online: '#00E676',
-  offline: '#64748B',
-  verified: '#6C5CE7',
-  premium: '#FFD93D',
+  online: '#10B981',
+  offline: '#8B91A8',
+  verified: '#4F46E5',
+  premium: '#F59E0B',
 
   // Gradients (as arrays for LinearGradient)
-  gradientPrimary: ['#6C5CE7', '#A29BFE'],
-  gradientAccent: ['#00D2FF', '#6C5CE7'],
-  gradientDark: ['#0A0F1E', '#111827'],
-  gradientGold: ['#FFD93D', '#FF9100'],
-  gradientSuccess: ['#00E676', '#00D2FF'],
-  gradientCard: ['rgba(108,92,231,0.08)', 'rgba(0,210,255,0.04)'],
+  gradientPrimary: ['#4F46E5', '#6366F1'],
+  gradientAccent: ['#10B981', '#34D399'],
+  gradientDark: ['#F7F8FC', '#FFFFFF'],
+  gradientGold: ['#F59E0B', '#FBBF24'],
+  gradientSuccess: ['#10B981', '#34D399'],
+  gradientCard: ['rgba(79,70,229,0.04)', 'rgba(16,185,129,0.02)'],
 };
 
 export const Fonts = {
@@ -101,36 +113,36 @@ export const Shadows = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 5,
   },
   lg: {
-    shadowColor: '#6C5CE7',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.08,
     shadowRadius: 24,
     elevation: 10,
   },
   glow: {
-    shadowColor: '#6C5CE7',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
     elevation: 12,
   },
 };
 
 export const API_CONFIG = {
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://your-api.railway.app',
-  WS_URL: process.env.EXPO_PUBLIC_WS_URL || 'wss://your-api.railway.app',
+  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://myhomeworkpal-api-production.up.railway.app/api/v1',
+  WS_URL: process.env.EXPO_PUBLIC_WS_URL || 'wss://myhomeworkpal-api-production.up.railway.app',
   STRIPE_KEY: process.env.EXPO_PUBLIC_STRIPE_KEY || '',
 };
 
@@ -141,13 +153,13 @@ export const APP_CONFIG = {
   maxFileSize: 25 * 1024 * 1024, // 25MB
   supportedFileTypes: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.png', '.zip'],
   categories: [
-    { id: 'math', label: 'Mathematics', icon: 'calculator', color: '#6C5CE7' },
-    { id: 'science', label: 'Science', icon: 'flask-outline', color: '#00D2FF' },
-    { id: 'english', label: 'English & Writing', icon: 'book-open-variant', color: '#FF9100' },
-    { id: 'cs', label: 'Computer Science', icon: 'code-tags', color: '#00E676' },
-    { id: 'business', label: 'Business', icon: 'briefcase', color: '#FFD93D' },
-    { id: 'engineering', label: 'Engineering', icon: 'cog', color: '#FF5252' },
-    { id: 'humanities', label: 'Humanities', icon: 'school', color: '#A29BFE' },
-    { id: 'other', label: 'Other', icon: 'dots-horizontal', color: '#94A3B8' },
+    { id: 'math', label: 'Mathematics', icon: 'calculator', color: '#4F46E5' },
+    { id: 'science', label: 'Science', icon: 'flask-outline', color: '#10B981' },
+    { id: 'english', label: 'English & Writing', icon: 'book-open-variant', color: '#E67E22' },
+    { id: 'cs', label: 'Computer Science', icon: 'code-tags', color: '#06B6D4' },
+    { id: 'business', label: 'Business', icon: 'briefcase', color: '#F59E0B' },
+    { id: 'engineering', label: 'Engineering', icon: 'cog', color: '#EF4444' },
+    { id: 'humanities', label: 'Humanities', icon: 'school', color: '#8B5CF6' },
+    { id: 'other', label: 'Other', icon: 'dots-horizontal', color: '#8B91A8' },
   ],
 };

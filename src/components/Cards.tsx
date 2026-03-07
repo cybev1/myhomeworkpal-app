@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 import { Card, Avatar, Badge, StarRating } from './UI';
@@ -8,13 +7,9 @@ import { Task, User } from '@/context/stores';
 import { formatDistanceToNow } from 'date-fns';
 
 // ═══════════════════════════════════════
-// TASK CARD — Marketplace listing
+// TASK CARD — Marketplace listing (white theme)
 // ═══════════════════════════════════════
-interface TaskCardProps {
-  task: Task;
-  onPress: () => void;
-  compact?: boolean;
-}
+interface TaskCardProps { task: Task; onPress: () => void; compact?: boolean; }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress, compact }) => {
   const statusMap: Record<string, { label: string; variant: any }> = {
@@ -25,34 +20,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress, compact }) =>
     cancelled: { label: 'Cancelled', variant: 'error' },
     disputed: { label: 'Disputed', variant: 'error' },
   };
-
   const status = statusMap[task.status] || statusMap.open;
 
   return (
-    <Card variant="gradient" onPress={onPress} style={compact ? styles.compactCard : styles.taskCard}>
-      {/* Header */}
+    <Card variant="default" onPress={onPress} style={compact ? styles.compactCard : styles.taskCard}>
       <View style={styles.taskHeader}>
         <View style={{ flex: 1 }}>
           <View style={styles.taskMeta}>
             <Badge label={status.label} variant={status.variant} />
-            <Text style={styles.taskCategory}>
-              {task.category?.replace('_', ' ').toUpperCase()}
-            </Text>
+            <Text style={styles.taskCategory}>{task.category?.replace('_', ' ').toUpperCase()}</Text>
           </View>
-          <Text style={styles.taskTitle} numberOfLines={2}>
-            {task.title}
-          </Text>
+          <Text style={styles.taskTitle} numberOfLines={2}>{task.title}</Text>
         </View>
       </View>
-
-      {/* Description */}
-      {!compact && (
-        <Text style={styles.taskDesc} numberOfLines={3}>
-          {task.description}
-        </Text>
-      )}
-
-      {/* Footer */}
+      {!compact && <Text style={styles.taskDesc} numberOfLines={3}>{task.description}</Text>}
       <View style={styles.taskFooter}>
         <View style={styles.taskFooterLeft}>
           {task.student && (
@@ -64,7 +45,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress, compact }) =>
         </View>
         <View style={styles.taskFooterRight}>
           <View style={styles.taskStat}>
-            <Ionicons name="chatbubble-outline" size={14} color={Colors.muted} />
+            <Ionicons name="chatbubble-outline" size={14} color={Colors.textMuted} />
             <Text style={styles.taskStatText}>{task.bidsCount || 0} bids</Text>
           </View>
           <View style={styles.budgetPill}>
@@ -72,10 +53,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress, compact }) =>
           </View>
         </View>
       </View>
-
-      {/* Deadline */}
       <View style={styles.deadlineRow}>
-        <Ionicons name="time-outline" size={13} color={Colors.muted} />
+        <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
         <Text style={styles.deadlineText}>
           Due {task.deadline ? formatDistanceToNow(new Date(task.deadline), { addSuffix: true }) : 'N/A'}
         </Text>
@@ -90,29 +69,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress, compact }) =>
 };
 
 // ═══════════════════════════════════════
-// HELPER SERVICE CARD — Gig listing
+// HELPER SERVICE CARD
 // ═══════════════════════════════════════
 interface ServiceCardProps {
-  service: {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    price: number;
-    deliveryDays: number;
-    helper: User;
-  };
+  service: { id: string; title: string; description: string; category: string; price: number; deliveryDays: number; helper: User; };
   onPress: () => void;
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onPress }) => (
-  <Card variant="glass" onPress={onPress} style={styles.serviceCard}>
-    {/* Gradient accent top */}
-    <LinearGradient
-      colors={['rgba(108,92,231,0.15)', 'transparent']}
-      style={styles.serviceAccent}
-    />
-
+  <Card variant="default" onPress={onPress} style={styles.serviceCard}>
     <View style={styles.serviceContent}>
       <View style={styles.serviceHeader}>
         <Avatar name={service.helper?.name || 'H'} size={40} verified />
@@ -120,26 +85,16 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onPress }) =>
           <Text style={styles.serviceName}>{service.helper?.name}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <StarRating rating={service.helper?.rating || 0} size={12} />
-            <Text style={styles.serviceReviews}>
-              ({service.helper?.totalReviews || 0})
-            </Text>
+            <Text style={styles.serviceReviews}>({service.helper?.totalReviews || 0})</Text>
           </View>
         </View>
       </View>
-
-      <Text style={styles.serviceTitle} numberOfLines={2}>
-        {service.title}
-      </Text>
-      <Text style={styles.serviceDesc} numberOfLines={2}>
-        {service.description}
-      </Text>
-
+      <Text style={styles.serviceTitle} numberOfLines={2}>{service.title}</Text>
+      <Text style={styles.serviceDesc} numberOfLines={2}>{service.description}</Text>
       <View style={styles.serviceFooter}>
         <View style={styles.serviceDelivery}>
           <Ionicons name="flash-outline" size={14} color={Colors.accent} />
-          <Text style={styles.serviceDeliveryText}>
-            {service.deliveryDays} day delivery
-          </Text>
+          <Text style={styles.serviceDeliveryText}>{service.deliveryDays} day delivery</Text>
         </View>
         <View>
           <Text style={styles.serviceFromLabel}>Starting at</Text>
@@ -154,18 +109,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onPress }) =>
 // BID CARD
 // ═══════════════════════════════════════
 interface BidCardProps {
-  bid: {
-    id: string;
-    amount: number;
-    message: string;
-    deliveryDays: number;
-    status: string;
-    helper: User;
-    createdAt: string;
-  };
-  onAccept?: () => void;
-  onReject?: () => void;
-  isOwner?: boolean;
+  bid: { id: string; amount: number; message: string; deliveryDays: number; status: string; helper: User; createdAt: string; };
+  onAccept?: () => void; onReject?: () => void; isOwner?: boolean;
 }
 
 export const BidCard: React.FC<BidCardProps> = ({ bid, onAccept, onReject, isOwner }) => (
@@ -176,9 +121,7 @@ export const BidCard: React.FC<BidCardProps> = ({ bid, onAccept, onReject, isOwn
         <Text style={styles.bidHelperName}>{bid.helper?.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <StarRating rating={bid.helper?.rating || 0} size={14} />
-          <Text style={styles.bidHelperMeta}>
-            {bid.helper?.completedOrders || 0} orders
-          </Text>
+          <Text style={styles.bidHelperMeta}>{bid.helper?.completedOrders || 0} orders</Text>
         </View>
       </View>
       <View style={styles.bidPriceBox}>
@@ -186,16 +129,12 @@ export const BidCard: React.FC<BidCardProps> = ({ bid, onAccept, onReject, isOwn
         <Text style={styles.bidDelivery}>{bid.deliveryDays}d delivery</Text>
       </View>
     </View>
-
-    <Text style={styles.bidMessage} numberOfLines={3}>
-      {bid.message}
-    </Text>
-
+    <Text style={styles.bidMessage} numberOfLines={3}>{bid.message}</Text>
     {isOwner && bid.status === 'pending' && (
       <View style={styles.bidActions}>
         <TouchableOpacity onPress={onAccept} style={styles.bidAcceptBtn}>
-          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={[styles.bidActionText, { color: Colors.success }]}>Accept</Text>
+          <Ionicons name="checkmark-circle" size={20} color="#059669" />
+          <Text style={[styles.bidActionText, { color: '#059669' }]}>Accept</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onReject} style={styles.bidRejectBtn}>
           <Ionicons name="close-circle" size={20} color={Colors.error} />
@@ -210,40 +149,23 @@ export const BidCard: React.FC<BidCardProps> = ({ bid, onAccept, onReject, isOwn
 // CONVERSATION ITEM
 // ═══════════════════════════════════════
 interface ConversationItemProps {
-  conversation: {
-    id: string;
-    participant: User;
-    lastMessage?: { content: string; createdAt: string };
-    unreadCount: number;
-  };
+  conversation: { id: string; participant: User; lastMessage?: { content: string; createdAt: string }; unreadCount: number; };
   onPress: () => void;
 }
 
 export const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onPress }) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.convItem}>
-    <Avatar
-      name={conversation.participant?.name || 'U'}
-      size={52}
-      online
-    />
+    <Avatar name={conversation.participant?.name || 'U'} size={52} online />
     <View style={styles.convContent}>
       <View style={styles.convHeader}>
         <Text style={styles.convName}>{conversation.participant?.name}</Text>
         {conversation.lastMessage && (
-          <Text style={styles.convTime}>
-            {formatDistanceToNow(new Date(conversation.lastMessage.createdAt), { addSuffix: true })}
-          </Text>
+          <Text style={styles.convTime}>{formatDistanceToNow(new Date(conversation.lastMessage.createdAt), { addSuffix: true })}</Text>
         )}
       </View>
       <View style={styles.convPreview}>
-        <Text style={styles.convMessage} numberOfLines={1}>
-          {conversation.lastMessage?.content || 'Start a conversation'}
-        </Text>
-        {conversation.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadText}>{conversation.unreadCount}</Text>
-          </View>
-        )}
+        <Text style={styles.convMessage} numberOfLines={1}>{conversation.lastMessage?.content || 'Start a conversation'}</Text>
+        {conversation.unreadCount > 0 && <View style={styles.unreadBadge}><Text style={styles.unreadText}>{conversation.unreadCount}</Text></View>}
       </View>
     </View>
   </TouchableOpacity>
@@ -255,98 +177,61 @@ const styles = StyleSheet.create({
   compactCard: { marginHorizontal: Spacing.base, marginBottom: Spacing.sm, padding: Spacing.md },
   taskHeader: { flexDirection: 'row', marginBottom: Spacing.sm },
   taskMeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: 6 },
-  taskCategory: { fontSize: 10, color: Colors.muted, fontWeight: '700', letterSpacing: 1 },
-  taskTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.white, lineHeight: 24 },
-  taskDesc: { fontSize: Fonts.sizes.sm, color: Colors.subtle, lineHeight: 20, marginBottom: Spacing.md },
+  taskCategory: { fontSize: 10, color: Colors.textMuted, fontWeight: '700', letterSpacing: 1 },
+  taskTitle: { fontSize: Fonts.sizes.md, fontWeight: '700', color: Colors.text, lineHeight: 24 },
+  taskDesc: { fontSize: Fonts.sizes.sm, color: Colors.textSoft, lineHeight: 20, marginBottom: Spacing.md },
   taskFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
   taskFooterLeft: { flexDirection: 'row', alignItems: 'center' },
   taskFooterRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   taskAuthor: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  taskAuthorName: { fontSize: Fonts.sizes.sm, color: Colors.light, fontWeight: '500' },
+  taskAuthorName: { fontSize: Fonts.sizes.sm, color: Colors.textSoft, fontWeight: '500' },
   taskStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  taskStatText: { fontSize: Fonts.sizes.xs, color: Colors.muted },
-  budgetPill: {
-    backgroundColor: 'rgba(108,92,231,0.15)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  budgetText: { fontSize: Fonts.sizes.base, fontWeight: '800', color: Colors.primaryLight },
+  taskStatText: { fontSize: Fonts.sizes.xs, color: Colors.textMuted },
+  budgetPill: { backgroundColor: Colors.primarySoft, paddingHorizontal: Spacing.md, paddingVertical: 4, borderRadius: Radius.full },
+  budgetText: { fontSize: Fonts.sizes.base, fontWeight: '800', color: Colors.primary },
   deadlineRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  deadlineText: { fontSize: Fonts.sizes.xs, color: Colors.muted },
-  postedText: { fontSize: Fonts.sizes.xs, color: Colors.muted, marginLeft: 'auto' },
+  deadlineText: { fontSize: Fonts.sizes.xs, color: Colors.textMuted },
+  postedText: { fontSize: Fonts.sizes.xs, color: Colors.textMuted, marginLeft: 'auto' },
 
   serviceCard: { width: 280, marginRight: Spacing.md, padding: 0, overflow: 'hidden' },
-  serviceAccent: { height: 4, width: '100%' },
   serviceContent: { padding: Spacing.base },
   serviceHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  serviceName: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.light },
-  serviceReviews: { fontSize: 11, color: Colors.muted },
-  serviceTitle: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.white, marginBottom: 4, lineHeight: 22 },
-  serviceDesc: { fontSize: Fonts.sizes.sm, color: Colors.subtle, lineHeight: 18, marginBottom: Spacing.md },
+  serviceName: { fontSize: Fonts.sizes.sm, fontWeight: '600', color: Colors.textSoft },
+  serviceReviews: { fontSize: 11, color: Colors.textMuted },
+  serviceTitle: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.text, marginBottom: 4, lineHeight: 22 },
+  serviceDesc: { fontSize: Fonts.sizes.sm, color: Colors.textSoft, lineHeight: 18, marginBottom: Spacing.md },
   serviceFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   serviceDelivery: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   serviceDeliveryText: { fontSize: Fonts.sizes.xs, color: Colors.accent, fontWeight: '600' },
-  serviceFromLabel: { fontSize: 10, color: Colors.muted, textAlign: 'right' },
-  servicePrice: { fontSize: Fonts.sizes.lg, fontWeight: '800', color: Colors.white },
+  serviceFromLabel: { fontSize: 10, color: Colors.textMuted, textAlign: 'right' },
+  servicePrice: { fontSize: Fonts.sizes.lg, fontWeight: '800', color: Colors.text },
 
   bidCard: { marginBottom: Spacing.md },
   bidHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  bidHelperName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.white },
-  bidHelperMeta: { fontSize: Fonts.sizes.xs, color: Colors.muted },
+  bidHelperName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: Colors.text },
+  bidHelperMeta: { fontSize: Fonts.sizes.xs, color: Colors.textMuted },
   bidPriceBox: { alignItems: 'flex-end' },
-  bidPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primaryLight },
+  bidPrice: { fontSize: Fonts.sizes.xl, fontWeight: '800', color: Colors.primary },
   bidDelivery: { fontSize: Fonts.sizes.xs, color: Colors.accent },
-  bidMessage: { fontSize: Fonts.sizes.sm, color: Colors.subtle, lineHeight: 20, marginBottom: Spacing.md },
+  bidMessage: { fontSize: Fonts.sizes.sm, color: Colors.textSoft, lineHeight: 20, marginBottom: Spacing.md },
   bidActions: { flexDirection: 'row', gap: Spacing.md },
   bidAcceptBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(0,230,118,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(0,230,118,0.2)',
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: Radius.md, backgroundColor: 'rgba(16,185,129,0.06)', borderWidth: 1, borderColor: 'rgba(16,185,129,0.2)',
   },
   bidRejectBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(255,82,82,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,82,82,0.2)',
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: Radius.md, backgroundColor: 'rgba(239,68,68,0.06)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
   },
   bidActionText: { fontSize: Fonts.sizes.sm, fontWeight: '600' },
 
-  convItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.darkBorder,
-  },
+  convItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border },
   convContent: { flex: 1, marginLeft: Spacing.md },
   convHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  convName: { fontSize: Fonts.sizes.base, fontWeight: '600', color: Colors.white },
-  convTime: { fontSize: Fonts.sizes.xs, color: Colors.muted },
+  convName: { fontSize: Fonts.sizes.base, fontWeight: '600', color: Colors.text },
+  convTime: { fontSize: Fonts.sizes.xs, color: Colors.textMuted },
   convPreview: { flexDirection: 'row', alignItems: 'center' },
-  convMessage: { flex: 1, fontSize: Fonts.sizes.sm, color: Colors.subtle },
-  unreadBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: Spacing.sm,
-  },
+  convMessage: { flex: 1, fontSize: Fonts.sizes.sm, color: Colors.textSoft },
+  unreadBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.sm },
   unreadText: { fontSize: 11, fontWeight: '700', color: '#fff' },
 });

@@ -66,7 +66,7 @@ export default function ChatScreen() {
         <View style={[styles.msgBubble, isMine ? styles.msgBubbleMine : styles.msgBubbleOther]}>
           {isMine ? (
             <LinearGradient
-              colors={['#6C5CE7', '#8B5CF6']}
+              colors={['#4F46E5', '#6366F1']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.msgGradient}
@@ -144,7 +144,7 @@ export default function ChatScreen() {
             disabled={!message.trim()}
           >
             {message.trim() ? (
-              <LinearGradient colors={['#6C5CE7', '#8B5CF6']} style={styles.sendGradient}>
+              <LinearGradient colors={['#4F46E5', '#6366F1']} style={styles.sendGradient}>
                 <Ionicons name="send" size={18} color="#fff" />
               </LinearGradient>
             ) : (

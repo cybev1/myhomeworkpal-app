@@ -1,24 +1,15 @@
 import React, { ReactNode } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  Platform,
-  Dimensions,
+  View, Text, TouchableOpacity, TextInput, ActivityIndicator,
+  StyleSheet, ViewStyle, Platform, Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadows } from '@/constants/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
 
 // ═══════════════════════════════════════
-// GRADIENT BUTTON — Primary CTA
+// BUTTON — Clean white-theme CTA
 // ═══════════════════════════════════════
 interface ButtonProps {
   title: string;
@@ -40,70 +31,39 @@ export const Button: React.FC<ButtonProps> = ({
   const fontSizes = { sm: Fonts.sizes.sm, md: Fonts.sizes.base, lg: Fonts.sizes.md };
   const h = heights[size];
 
-  if (variant === 'primary') {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        disabled={disabled || loading}
-        activeOpacity={0.85}
-        style={[fullWidth && { width: '100%' }, style]}
-      >
-        <LinearGradient
-          colors={disabled ? ['#4A4A6A', '#3A3A5A'] : ['#6C5CE7', '#8B5CF6']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.btnBase,
-            { height: h, borderRadius: h / 2 },
-            !disabled && Shadows.glow,
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <View style={styles.btnInner}>
-              {icon && <Ionicons name={icon} size={size === 'sm' ? 16 : 20} color="#fff" style={{ marginRight: 8 }} />}
-              <Text style={[styles.btnText, { fontSize: fontSizes[size] }]}>{title}</Text>
-            </View>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }
-
-  const variantStyles: Record<string, { bg: string; border: string; text: string }> = {
-    secondary: { bg: Colors.darkElevated, border: Colors.darkBorder, text: Colors.white },
-    outline: { bg: 'transparent', border: Colors.primary, text: Colors.primary },
-    ghost: { bg: 'transparent', border: 'transparent', text: Colors.primaryLight },
-    danger: { bg: 'rgba(255,82,82,0.1)', border: Colors.error, text: Colors.error },
+  const vs: Record<string, { bg: string; border: string; text: string }> = {
+    primary:   { bg: Colors.primary, border: 'transparent', text: '#FFFFFF' },
+    secondary: { bg: Colors.bgSoft, border: Colors.border, text: Colors.text },
+    outline:   { bg: 'transparent', border: Colors.primary, text: Colors.primary },
+    ghost:     { bg: 'transparent', border: 'transparent', text: Colors.primary },
+    danger:    { bg: 'rgba(239,68,68,0.08)', border: Colors.error, text: Colors.error },
   };
-
-  const vs = variantStyles[variant] || variantStyles.secondary;
+  const v = vs[variant] || vs.primary;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
       style={[
         styles.btnBase,
         {
-          height: h,
-          borderRadius: h / 2,
-          backgroundColor: vs.bg,
-          borderWidth: variant === 'ghost' ? 0 : 1.5,
-          borderColor: vs.border,
+          height: h, borderRadius: h / 2,
+          backgroundColor: disabled ? Colors.bgMuted : v.bg,
+          borderWidth: variant === 'ghost' || variant === 'primary' ? 0 : 1.5,
+          borderColor: v.border,
         },
+        variant === 'primary' && !disabled && Shadows.glow,
         fullWidth && { width: '100%' },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={vs.text} size="small" />
+        <ActivityIndicator color={v.text} size="small" />
       ) : (
         <View style={styles.btnInner}>
-          {icon && <Ionicons name={icon} size={size === 'sm' ? 16 : 20} color={vs.text} style={{ marginRight: 8 }} />}
-          <Text style={[styles.btnText, { fontSize: fontSizes[size], color: vs.text }]}>{title}</Text>
+          {icon && <Ionicons name={icon} size={size === 'sm' ? 16 : 20} color={disabled ? Colors.textMuted : v.text} style={{ marginRight: 8 }} />}
+          <Text style={[styles.btnText, { fontSize: fontSizes[size], color: disabled ? Colors.textMuted : v.text }]}>{title}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -111,20 +71,13 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 // ═══════════════════════════════════════
-// FLOATING INPUT — Stripe-style
+// FLOATING INPUT
 // ═══════════════════════════════════════
 interface InputProps {
-  label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  secureTextEntry?: boolean;
-  keyboardType?: any;
-  multiline?: boolean;
-  numberOfLines?: number;
-  icon?: keyof typeof Ionicons.glyphMap;
-  error?: string;
-  style?: ViewStyle;
+  label: string; value: string; onChangeText: (text: string) => void;
+  placeholder?: string; secureTextEntry?: boolean; keyboardType?: any;
+  multiline?: boolean; numberOfLines?: number;
+  icon?: keyof typeof Ionicons.glyphMap; error?: string; style?: ViewStyle;
 }
 
 export const FloatingInput: React.FC<InputProps> = ({
@@ -136,47 +89,22 @@ export const FloatingInput: React.FC<InputProps> = ({
 
   return (
     <View style={[{ marginBottom: Spacing.base }, style]}>
-      <View
-        style={[
-          styles.inputContainer,
-          focused && styles.inputFocused,
-          error && styles.inputError,
-          multiline && { height: (numberOfLines || 4) * 24 + 40 },
-        ]}
-      >
-        {icon && (
-          <Ionicons
-            name={icon}
-            size={20}
-            color={focused ? Colors.primary : Colors.muted}
-            style={{ marginRight: Spacing.sm }}
-          />
-        )}
+      <View style={[
+        styles.inputContainer,
+        focused && styles.inputFocused,
+        error && styles.inputError,
+        multiline && { height: (numberOfLines || 4) * 24 + 40 },
+      ]}>
+        {icon && <Ionicons name={icon} size={20} color={focused ? Colors.primary : Colors.textMuted} style={{ marginRight: Spacing.sm }} />}
         <View style={{ flex: 1 }}>
-          <Text
-            style={[
-              styles.floatingLabel,
-              isActive && styles.floatingLabelActive,
-            ]}
-          >
-            {label}
-          </Text>
+          <Text style={[styles.floatingLabel, isActive && styles.floatingLabelActive]}>{label}</Text>
           <TextInput
-            value={value}
-            onChangeText={onChangeText}
-            placeholder={isActive ? placeholder : ''}
-            placeholderTextColor={Colors.muted}
-            secureTextEntry={secureTextEntry}
-            keyboardType={keyboardType}
-            multiline={multiline}
-            numberOfLines={numberOfLines}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            style={[
-              styles.input,
-              isActive && { paddingTop: 14 },
-              multiline && { textAlignVertical: 'top', height: (numberOfLines || 4) * 24 },
-            ]}
+            value={value} onChangeText={onChangeText}
+            placeholder={isActive ? placeholder : ''} placeholderTextColor={Colors.textMuted}
+            secureTextEntry={secureTextEntry} keyboardType={keyboardType}
+            multiline={multiline} numberOfLines={numberOfLines}
+            onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+            style={[styles.input, isActive && { paddingTop: 14 }, multiline && { textAlignVertical: 'top', height: (numberOfLines || 4) * 24 }]}
           />
         </View>
       </View>
@@ -186,123 +114,35 @@ export const FloatingInput: React.FC<InputProps> = ({
 };
 
 // ═══════════════════════════════════════
-// PREMIUM CARD
+// CARD — White professional
 // ═══════════════════════════════════════
-interface CardProps {
-  children: ReactNode;
-  onPress?: () => void;
-  style?: ViewStyle;
-  variant?: 'default' | 'elevated' | 'glass' | 'gradient';
-}
+interface CardProps { children: ReactNode; onPress?: () => void; style?: ViewStyle; variant?: 'default' | 'elevated' | 'glass' | 'gradient'; }
 
 export const Card: React.FC<CardProps> = ({ children, onPress, style, variant = 'default' }) => {
-  const cardStyles: Record<string, ViewStyle> = {
-    default: { backgroundColor: Colors.darkCard, borderWidth: 1, borderColor: Colors.darkBorder },
-    elevated: { backgroundColor: Colors.darkElevated, ...Shadows.md },
-    glass: {
-      backgroundColor: 'rgba(17,24,39,0.7)',
-      borderWidth: 1,
-      borderColor: 'rgba(108,92,231,0.2)',
-    },
-    gradient: {},
+  const cardMap: Record<string, ViewStyle> = {
+    default:  { backgroundColor: '#fff', borderWidth: 1, borderColor: Colors.border },
+    elevated: { backgroundColor: '#fff', ...Shadows.md },
+    glass:    { backgroundColor: Colors.bgSoft, borderWidth: 1, borderColor: Colors.border },
+    gradient: { backgroundColor: '#fff', borderWidth: 1, borderColor: Colors.border },
   };
-
-  const inner = (
-    <View style={[styles.card, cardStyles[variant], style]}>
-      {children}
-    </View>
-  );
-
-  if (variant === 'gradient') {
-    const wrapped = (
-      <LinearGradient
-        colors={['rgba(108,92,231,0.06)', 'rgba(0,210,255,0.03)']}
-        style={[styles.card, { borderWidth: 1, borderColor: 'rgba(108,92,231,0.15)' }, style]}
-      >
-        {children}
-      </LinearGradient>
-    );
-    return onPress ? (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
-        {wrapped}
-      </TouchableOpacity>
-    ) : wrapped;
-  }
-
-  return onPress ? (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
-      {inner}
-    </TouchableOpacity>
-  ) : inner;
+  const inner = <View style={[styles.card, cardMap[variant], style]}>{children}</View>;
+  return onPress ? <TouchableOpacity onPress={onPress} activeOpacity={0.85}>{inner}</TouchableOpacity> : inner;
 };
 
 // ═══════════════════════════════════════
 // AVATAR
 // ═══════════════════════════════════════
-interface AvatarProps {
-  name: string;
-  uri?: string;
-  size?: number;
-  online?: boolean;
-  verified?: boolean;
-}
+interface AvatarProps { name: string; uri?: string; size?: number; online?: boolean; verified?: boolean; }
 
 export const Avatar: React.FC<AvatarProps> = ({ name, uri, size = 44, online, verified }) => {
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
+  const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   return (
     <View style={{ position: 'relative' }}>
-      {uri ? (
-        <View
-          style={[
-            styles.avatar,
-            { width: size, height: size, borderRadius: size / 2 },
-          ]}
-        >
-          {/* Use expo-image in real build */}
-          <View
-            style={{
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              backgroundColor: Colors.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: size * 0.38, fontWeight: '700' }}>
-              {initials}
-            </Text>
-          </View>
-        </View>
-      ) : (
-        <LinearGradient
-          colors={['#6C5CE7', '#A29BFE']}
-          style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
-        >
-          <Text style={{ color: '#fff', fontSize: size * 0.38, fontWeight: '700' }}>
-            {initials}
-          </Text>
-        </LinearGradient>
-      )}
-      {online && (
-        <View
-          style={[
-            styles.onlineDot,
-            { width: size * 0.28, height: size * 0.28, borderRadius: size * 0.14 },
-          ]}
-        />
-      )}
-      {verified && (
-        <View style={[styles.verifiedBadge, { bottom: -2, right: -2 }]}>
-          <Ionicons name="checkmark-circle" size={size * 0.36} color={Colors.primary} />
-        </View>
-      )}
+      <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor: Colors.primary }]}>
+        <Text style={{ color: '#fff', fontSize: size * 0.38, fontWeight: '700' }}>{initials}</Text>
+      </View>
+      {online && <View style={[styles.onlineDot, { width: size * 0.28, height: size * 0.28, borderRadius: size * 0.14 }]} />}
+      {verified && <View style={[styles.verifiedBadge, { bottom: -2, right: -2 }]}><Ionicons name="checkmark-circle" size={size * 0.36} color={Colors.primary} /></View>}
     </View>
   );
 };
@@ -310,28 +150,21 @@ export const Avatar: React.FC<AvatarProps> = ({ name, uri, size = 44, online, ve
 // ═══════════════════════════════════════
 // STATUS BADGE
 // ═══════════════════════════════════════
-interface BadgeProps {
-  label: string;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'premium';
-  size?: 'sm' | 'md';
-}
+interface BadgeProps { label: string; variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'premium'; size?: 'sm' | 'md'; }
 
 export const Badge: React.FC<BadgeProps> = ({ label, variant = 'default', size = 'sm' }) => {
   const colors: Record<string, { bg: string; text: string }> = {
-    default: { bg: 'rgba(100,116,139,0.15)', text: Colors.subtle },
-    success: { bg: 'rgba(0,230,118,0.12)', text: Colors.success },
-    warning: { bg: 'rgba(255,145,0,0.12)', text: Colors.warning },
-    error: { bg: 'rgba(255,82,82,0.12)', text: Colors.error },
-    info: { bg: 'rgba(0,210,255,0.12)', text: Colors.accent },
-    premium: { bg: 'rgba(255,217,61,0.12)', text: Colors.premium },
+    default: { bg: Colors.bgMuted, text: Colors.textMuted },
+    success: { bg: 'rgba(16,185,129,0.1)', text: '#059669' },
+    warning: { bg: 'rgba(245,158,11,0.1)', text: '#D97706' },
+    error:   { bg: 'rgba(239,68,68,0.1)', text: Colors.error },
+    info:    { bg: 'rgba(6,182,212,0.1)', text: '#0891B2' },
+    premium: { bg: 'rgba(245,158,11,0.1)', text: '#D97706' },
   };
   const c = colors[variant];
-
   return (
     <View style={[styles.badge, { backgroundColor: c.bg, paddingVertical: size === 'sm' ? 3 : 6 }]}>
-      <Text style={[styles.badgeText, { color: c.text, fontSize: size === 'sm' ? 11 : 13 }]}>
-        {label}
-      </Text>
+      <Text style={[styles.badgeText, { color: c.text, fontSize: size === 'sm' ? 11 : 13 }]}>{label}</Text>
     </View>
   );
 };
@@ -339,11 +172,7 @@ export const Badge: React.FC<BadgeProps> = ({ label, variant = 'default', size =
 // ═══════════════════════════════════════
 // SECTION HEADER
 // ═══════════════════════════════════════
-interface SectionProps {
-  title: string;
-  subtitle?: string;
-  action?: { label: string; onPress: () => void };
-}
+interface SectionProps { title: string; subtitle?: string; action?: { label: string; onPress: () => void }; }
 
 export const SectionHeader: React.FC<SectionProps> = ({ title, subtitle, action }) => (
   <View style={styles.sectionHeader}>
@@ -363,29 +192,14 @@ export const SectionHeader: React.FC<SectionProps> = ({ title, subtitle, action 
 // ═══════════════════════════════════════
 // EMPTY STATE
 // ═══════════════════════════════════════
-interface EmptyProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  message: string;
-  action?: { label: string; onPress: () => void };
-}
+interface EmptyProps { icon: keyof typeof Ionicons.glyphMap; title: string; message: string; action?: { label: string; onPress: () => void }; }
 
 export const EmptyState: React.FC<EmptyProps> = ({ icon, title, message, action }) => (
   <View style={styles.emptyState}>
-    <View style={styles.emptyIcon}>
-      <Ionicons name={icon} size={48} color={Colors.muted} />
-    </View>
+    <View style={styles.emptyIcon}><Ionicons name={icon} size={48} color={Colors.textMuted} /></View>
     <Text style={styles.emptyTitle}>{title}</Text>
     <Text style={styles.emptyMessage}>{message}</Text>
-    {action && (
-      <Button
-        title={action.label}
-        onPress={action.onPress}
-        variant="primary"
-        size="sm"
-        style={{ marginTop: Spacing.lg }}
-      />
-    )}
+    {action && <Button title={action.label} onPress={action.onPress} variant="primary" size="sm" style={{ marginTop: Spacing.lg }} />}
   </View>
 );
 
@@ -397,15 +211,10 @@ export const StarRating: React.FC<{ rating: number; size?: number; interactive?:
 }) => (
   <View style={{ flexDirection: 'row', gap: 2 }}>
     {[1, 2, 3, 4, 5].map((star) => (
-      <TouchableOpacity
-        key={star}
-        disabled={!interactive}
-        onPress={() => onChange?.(star)}
-      >
+      <TouchableOpacity key={star} disabled={!interactive} onPress={() => onChange?.(star)}>
         <Ionicons
           name={star <= rating ? 'star' : star - 0.5 <= rating ? 'star-half' : 'star-outline'}
-          size={size}
-          color={star <= rating ? Colors.accentGold : Colors.darkBorder}
+          size={size} color={star <= rating ? Colors.accentGold : Colors.border}
         />
       </TouchableOpacity>
     ))}
@@ -413,149 +222,34 @@ export const StarRating: React.FC<{ rating: number; size?: number; interactive?:
 );
 
 // ═══════════════════════════════════════
-// STYLES
-// ═══════════════════════════════════════
 const styles = StyleSheet.create({
-  btnBase: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
-  btnInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  btnText: {
-    color: '#fff',
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+  btnBase: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.xl },
+  btnInner: { flexDirection: 'row', alignItems: 'center' },
+  btnText: { color: '#fff', fontWeight: '700', letterSpacing: 0.3 },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.darkCard,
-    borderWidth: 1.5,
-    borderColor: Colors.darkBorder,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.base,
-    height: 58,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bgSoft,
+    borderWidth: 1.5, borderColor: Colors.border, borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.base, height: 58,
   },
-  inputFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: 'rgba(108,92,231,0.04)',
-  },
-  inputError: {
-    borderColor: Colors.error,
-  },
-  floatingLabel: {
-    position: 'absolute',
-    top: 18,
-    left: 0,
-    fontSize: Fonts.sizes.base,
-    color: Colors.muted,
-  },
-  floatingLabelActive: {
-    top: 4,
-    fontSize: Fonts.sizes.xs,
-    color: Colors.primaryLight,
-  },
-  input: {
-    flex: 1,
-    color: Colors.white,
-    fontSize: Fonts.sizes.base,
-    paddingTop: 0,
-    paddingBottom: 0,
-  },
-  errorText: {
-    color: Colors.error,
-    fontSize: Fonts.sizes.xs,
-    marginTop: 4,
-    marginLeft: Spacing.base,
-  },
-  card: {
-    borderRadius: Radius.xl,
-    padding: Spacing.base,
-    overflow: 'hidden',
-  },
-  avatar: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  onlineDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: Colors.online,
-    borderWidth: 2,
-    borderColor: Colors.dark,
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    backgroundColor: Colors.dark,
-    borderRadius: 99,
-  },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.full,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  sectionTitle: {
-    fontSize: Fonts.sizes.lg,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: -0.3,
-  },
-  sectionSubtitle: {
-    fontSize: Fonts.sizes.sm,
-    color: Colors.muted,
-    marginTop: 2,
-  },
-  sectionAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  sectionActionText: {
-    fontSize: Fonts.sizes.sm,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing['5xl'],
-    paddingHorizontal: Spacing['2xl'],
-  },
-  emptyIcon: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: Colors.darkElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: Fonts.sizes.lg,
-    fontWeight: '700',
-    color: Colors.white,
-    marginBottom: Spacing.sm,
-  },
-  emptyMessage: {
-    fontSize: Fonts.sizes.base,
-    color: Colors.muted,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  inputFocused: { borderColor: Colors.primary, backgroundColor: 'rgba(79,70,229,0.03)' },
+  inputError: { borderColor: Colors.error },
+  floatingLabel: { position: 'absolute', top: 18, left: 0, fontSize: Fonts.sizes.base, color: Colors.textMuted },
+  floatingLabelActive: { top: 4, fontSize: Fonts.sizes.xs, color: Colors.primary },
+  input: { flex: 1, color: Colors.text, fontSize: Fonts.sizes.base, paddingTop: 0, paddingBottom: 0, ...(isWeb ? { outlineStyle: 'none' } as any : {}) },
+  errorText: { color: Colors.error, fontSize: Fonts.sizes.xs, marginTop: 4, marginLeft: Spacing.base },
+  card: { borderRadius: Radius.xl, padding: Spacing.base, overflow: 'hidden' },
+  avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  onlineDot: { position: 'absolute', bottom: 0, right: 0, backgroundColor: Colors.online, borderWidth: 2, borderColor: '#fff' },
+  verifiedBadge: { position: 'absolute', backgroundColor: '#fff', borderRadius: 99 },
+  badge: { paddingHorizontal: Spacing.sm, borderRadius: Radius.full, alignSelf: 'flex-start' },
+  badgeText: { fontWeight: '600', letterSpacing: 0.3 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
+  sectionTitle: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.text, letterSpacing: -0.3 },
+  sectionSubtitle: { fontSize: Fonts.sizes.sm, color: Colors.textMuted, marginTop: 2 },
+  sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  sectionActionText: { fontSize: Fonts.sizes.sm, color: Colors.primary, fontWeight: '600' },
+  emptyState: { alignItems: 'center', paddingVertical: Spacing['5xl'], paddingHorizontal: Spacing['2xl'] },
+  emptyIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: Colors.bgSoft, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.lg },
+  emptyTitle: { fontSize: Fonts.sizes.lg, fontWeight: '700', color: Colors.text, marginBottom: Spacing.sm },
+  emptyMessage: { fontSize: Fonts.sizes.base, color: Colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

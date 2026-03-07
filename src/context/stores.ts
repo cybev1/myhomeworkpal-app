@@ -35,13 +35,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     const { data } = await authAPI.login({ email, password });
-    await setToken(data.token);
+    // Token already stored by authAPI.login
     set({ user: data.user, isAuthenticated: true });
   },
 
   register: async (registerData) => {
-    const { data } = await authAPI.register(registerData);
-    await setToken(data.token);
+    // Backend signup returns user, then we need to login to get token
+    await authAPI.register(registerData);
+    // Now login with the same credentials
+    const { data } = await authAPI.login({ email: registerData.email, password: registerData.password });
     set({ user: data.user, isAuthenticated: true });
   },
 

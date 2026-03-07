@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTaskStore } from '@/context/stores';
+
 const isWeb = Platform.OS === 'web';
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981' };
 
+const cats = ['All', 'Math', 'CS', 'English', 'Science', 'Business', 'Engineering'];
+
 export default function ExploreScreen() {
   const router = useRouter();
+  const { tasks, isLoading, fetchTasks } = useTaskStore();
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState('tasks');
-  const cats = ['All', 'Math', 'CS', 'English', 'Science', 'Business', 'Engineering'];
   const [activeCat, setActiveCat] = useState('All');
-  const tasks = [
-    { id: '1', title: 'Statistics homework — hypothesis testing', cat: 'Math', budget: 40, bids: 5, time: '30m ago' },
-    { id: '2', title: 'React Native mobile app UI implementation', cat: 'CS', budget: 120, bids: 18, time: '1h ago' },
-    { id: '3', title: 'Business case study analysis — 3000 words', cat: 'Business', budget: 65, bids: 8, time: '2h ago' },
-    { id: '4', title: 'Organic Chemistry lab report', cat: 'Science', budget: 55, bids: 3, time: '10m ago' },
-  ];
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => { fetchTasks(); }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchTasks();
+    setRefreshing(false);
+  };
+
+  const onCatChange = (cat: string) => {
+    setActiveCat(cat);
+    if (cat === 'All') fetchTasks();
+    else fetchTasks({ category: cat.toLowerCase() });
+  };
+
+  const filteredTasks = tasks.filter((t: any) => {
+    if (search && !t.title?.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const statusColor = (s: string) => {
+    const map: Record<string, string> = { open: C.accent, in_progress: '#06B6D4', delivered: '#F59E0B', completed: C.accent };
+    return map[s] || C.textMuted;
+  };
 
   return (
     <View style={s.page}>
@@ -24,62 +46,90 @@ export default function ExploreScreen() {
         <Text style={[s.title, isWeb && { fontFamily: "'Bricolage Grotesque', sans-serif" }]}>Explore</Text>
         <TouchableOpacity style={s.filterBtn}><Ionicons name="options-outline" size={20} color={C.textSoft} /></TouchableOpacity>
       </View>
+
       <View style={s.searchWrap}>
         <Ionicons name="search-outline" size={18} color={C.textMuted} />
         <TextInput value={search} onChangeText={setSearch} placeholder="Search tasks, helpers, subjects..." placeholderTextColor={C.textMuted} style={s.searchInput} />
       </View>
-      <View style={s.tabRow}>
-        {['tasks', 'services', 'helpers'].map((t) => (
-          <TouchableOpacity key={t} onPress={() => setTab(t)} style={[s.tab, tab === t && s.tabActive]}>
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catScroll}>
         {cats.map((c) => (
-          <TouchableOpacity key={c} onPress={() => setActiveCat(c)} style={[s.chip, activeCat === c && s.chipActive]}>
-            <Text style={[s.chipText, activeCat === c && s.chipTextActive]}>{c}</Text>
+          <TouchableOpacity key={c} onPress={() => onCatChange(c)} style={[s.catChip, activeCat === c && s.catChipActive]}>
+            <Text style={[s.catText, activeCat === c && s.catTextActive]}>{c}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {tasks.map((t) => (
-          <TouchableOpacity key={t.id} style={s.taskCard} onPress={() => router.push(`/task/${t.id}`)}>
-            <View style={s.taskTop}><View style={s.badge}><Text style={s.badgeText}>Open</Text></View><Text style={s.taskCat}>{t.cat}</Text></View>
-            <Text style={s.taskTitle}>{t.title}</Text>
-            <View style={s.taskBot}><Text style={s.meta}>{t.bids} bids</Text><Text style={s.meta}>{t.time}</Text><View style={s.budgetPill}><Text style={s.budgetText}>${t.budget}</Text></View></View>
-          </TouchableOpacity>
-        ))}
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} />}
+      >
+        {isLoading && tasks.length === 0 ? (
+          <View style={s.loadWrap}><ActivityIndicator size="large" color={C.primary} /></View>
+        ) : filteredTasks.length === 0 ? (
+          <View style={s.emptyBox}>
+            <Ionicons name="search" size={40} color={C.textMuted} />
+            <Text style={s.emptyTitle}>No tasks found</Text>
+            <Text style={s.emptyDesc}>Try adjusting your search or filters</Text>
+          </View>
+        ) : (
+          filteredTasks.map((t: any) => (
+            <TouchableOpacity key={t.id || t._id} style={s.card} onPress={() => router.push(`/task/${t.id || t._id}`)}>
+              <View style={s.cardTop}>
+                <View style={[s.statusBadge, { backgroundColor: `${statusColor(t.status)}12` }]}>
+                  <View style={[s.statusDot, { backgroundColor: statusColor(t.status) }]} />
+                  <Text style={[s.statusText, { color: statusColor(t.status) }]}>
+                    {(t.status || 'open').replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                  </Text>
+                </View>
+                <Text style={s.budget}>${t.budget}</Text>
+              </View>
+              <Text style={s.cardTitle} numberOfLines={2}>{t.title}</Text>
+              {t.description && <Text style={s.cardDesc} numberOfLines={2}>{t.description}</Text>}
+              <View style={s.cardBot}>
+                <View style={s.meta}>
+                  <Ionicons name="chatbubble-outline" size={13} color={C.textMuted} />
+                  <Text style={s.metaText}>{t.bidsCount || t.bids_count || 0} bids</Text>
+                </View>
+                <Text style={s.category}>{(t.category || '').toUpperCase()}</Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
         <View style={{ height: 32 }} />
       </ScrollView>
     </View>
   );
 }
+
 const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 48, paddingBottom: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: C.text },
-  filterBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.bgSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 20, marginVertical: 8, backgroundColor: C.bgSoft, borderRadius: 12, paddingHorizontal: 14, height: 46, borderWidth: 1, borderColor: C.border },
-  searchInput: { flex: 1, fontSize: 14, color: C.text, ...(isWeb ? { outlineStyle: 'none' } : {}) },
-  tabRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 20, marginBottom: 8 },
-  tab: { paddingVertical: 8 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: C.primary },
-  tabText: { fontSize: 14, fontWeight: '600', color: C.textMuted },
-  tabTextActive: { color: C.primary },
-  catRow: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 100, backgroundColor: C.bgSoft, borderWidth: 1, borderColor: C.border },
-  chipActive: { backgroundColor: C.primarySoft, borderColor: C.primary },
-  chipText: { fontSize: 13, color: C.textMuted, fontWeight: '500' },
-  chipTextActive: { color: C.primary },
-  taskCard: { marginHorizontal: 20, marginBottom: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, borderRadius: 16, padding: 16 },
-  taskTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  badge: { backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 100 },
-  badgeText: { fontSize: 11, fontWeight: '700', color: C.accent },
-  taskCat: { fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1 },
-  taskTitle: { fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 22, marginBottom: 8 },
-  taskBot: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  meta: { fontSize: 12, color: C.textMuted },
-  budgetPill: { marginLeft: 'auto', backgroundColor: C.primarySoft, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
-  budgetText: { fontSize: 14, fontWeight: '800', color: C.primary },
+  title: { fontSize: 24, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
+  filterBtn: { width: 42, height: 42, borderRadius: 12, backgroundColor: C.bgSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginVertical: 12, backgroundColor: C.bgSoft, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: C.border, gap: 8 },
+  searchInput: { flex: 1, fontSize: 15, color: C.text, ...(isWeb ? { outlineStyle: 'none' } : {}) },
+  catScroll: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
+  catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 100, backgroundColor: C.bgSoft, borderWidth: 1, borderColor: C.border },
+  catChipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  catText: { fontSize: 13, fontWeight: '600', color: C.textMuted },
+  catTextActive: { color: '#fff' },
+
+  loadWrap: { paddingVertical: 60, alignItems: 'center' },
+  emptyBox: { alignItems: 'center', paddingVertical: 48 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: C.text, marginTop: 12 },
+  emptyDesc: { fontSize: 14, color: C.textMuted, marginTop: 4 },
+
+  card: { marginHorizontal: 20, marginBottom: 10, backgroundColor: '#fff', borderRadius: 16, padding: 18, borderWidth: 1, borderColor: C.border },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100, gap: 6 },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 12, fontWeight: '600' },
+  budget: { fontSize: 17, fontWeight: '800', color: C.primary },
+  cardTitle: { fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 22, marginBottom: 4 },
+  cardDesc: { fontSize: 13, color: C.textMuted, lineHeight: 20, marginBottom: 10 },
+  cardBot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: 12, color: C.textMuted },
+  category: { fontSize: 10, fontWeight: '700', color: C.textMuted, letterSpacing: 1 },
 });

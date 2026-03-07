@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { tasksAPI } from '@/services/api';
 
 const isWeb = Platform.OS === 'web';
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', accentSoft: '#ECFDF5' };
@@ -19,6 +20,7 @@ export default function CreateTaskScreen() {
   const [category, setCategory] = useState('');
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [loading, setLoading] = useState(false);
 
   return (
     <View style={s.page}>
@@ -73,8 +75,28 @@ export default function CreateTaskScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={s.submitBtn} onPress={() => Alert.alert('Success', 'Task posted!', [{ text: 'OK', onPress: () => router.back() }])}>
-          <Text style={s.submitText}>Post Task</Text>
+        <TouchableOpacity style={[s.submitBtn, loading && { opacity: 0.7 }]} disabled={loading} onPress={async () => {
+          if (!title || !category || !budget) {
+            Alert.alert('Missing Fields', 'Please fill in title, category, and budget');
+            return;
+          }
+          setLoading(true);
+          try {
+            await tasksAPI.create({
+              title,
+              description: desc,
+              category,
+              budget: parseFloat(budget),
+              deadline: deadline || undefined,
+            });
+            Alert.alert('Success', 'Task posted!', [{ text: 'OK', onPress: () => router.back() }]);
+          } catch (err: any) {
+            Alert.alert('Error', err.response?.data?.detail || 'Failed to create task');
+          } finally {
+            setLoading(false);
+          }
+        }}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>Post Task</Text>}
         </TouchableOpacity>
         <View style={{ height: 32 }} />
       </ScrollView>

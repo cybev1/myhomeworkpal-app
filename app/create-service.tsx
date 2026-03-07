@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors, Fonts, Spacing, Radius, APP_CONFIG } from '@/constants/theme';
 import { FloatingInput, Button } from '@/components/UI';
+import { servicesAPI } from '@/services/api';
 
 export default function CreateServiceScreen() {
   const router = useRouter();
@@ -12,6 +13,27 @@ export default function CreateServiceScreen() {
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [deliveryDays, setDeliveryDays] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = async () => {
+    if (!title || !category || !price) {
+      Alert.alert('Missing Fields', 'Please fill in title, category, and price');
+      return;
+    }
+    setLoading(true);
+    try {
+      await servicesAPI.create({
+        title, description, category,
+        price: parseFloat(price),
+        deliveryDays: parseInt(deliveryDays) || 1,
+      });
+      Alert.alert('Success', 'Service created!', [{ text: 'OK', onPress: () => router.back() }]);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to create service');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={s.container}>
@@ -35,7 +57,7 @@ export default function CreateServiceScreen() {
         </View>
         <FloatingInput label="Starting Price ($)" value={price} onChangeText={setPrice} placeholder="15" keyboardType="numeric" icon="cash-outline" />
         <FloatingInput label="Delivery Time (days)" value={deliveryDays} onChangeText={setDeliveryDays} placeholder="2" keyboardType="numeric" icon="time-outline" />
-        <Button title="Create Service" onPress={() => Alert.alert('Success', 'Service created!', [{ text: 'OK', onPress: () => router.back() }])} fullWidth size="lg" icon="checkmark-circle-outline" style={{ marginTop: Spacing.lg }} />
+        <Button title={loading ? "Creating..." : "Create Service"} onPress={handleCreate} fullWidth size="lg" icon="checkmark-circle-outline" style={{ marginTop: Spacing.lg }} loading={loading} disabled={loading} />
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
