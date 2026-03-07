@@ -2,12 +2,10 @@ import os
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, Text, DateTime,
-    ForeignKey, Enum, create_engine,
+    ForeignKey,
 )
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker as async_sessionmaker
-import enum
+from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 import uuid
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost/myhomeworkpal")

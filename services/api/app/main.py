@@ -1,6 +1,8 @@
 import os
-from fastapi import FastAPI
+import traceback
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.routers import auth, tasks, bids, orders, payments, chat, services, feed, users
 from app.models.database import init_db
@@ -17,10 +19,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — read from env or allow all common origins
+# CORS
 cors_origins_str = os.getenv("CORS_ORIGINS", "")
 if cors_origins_str:
-    origins = [o.strip() for o in cors_origins_str.split(",")]
+    origins = [o.strip() for o in cors_origins_str.split(",") if o.strip()]
 else:
     origins = [
         "https://myhomeworkpal.com",
@@ -34,9 +36,27 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Catch all errors and still return CORS headers
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"ERROR: {type(exc).__name__}: {str(exc)}")
+    traceback.print_exc()
+    origin = request.headers.get("origin", "")
+    headers = {}
+    if origin in origins:
+        headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {type(exc).__name__}"},
+        headers=headers,
+    )
 
 # Routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
