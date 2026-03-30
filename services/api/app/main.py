@@ -1,5 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
-# MyHomeworkPal API v2.1.0 — Fixed route prefixes + CORS
+# MyHomeworkPal API v2.1.1 — Dual-mount (works with any frontend)
+# Routes available at BOTH /auth/... AND /api/v1/auth/...
 # ═══════════════════════════════════════════════════════════════
 import os
 import traceback
@@ -18,7 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="MyHomeworkPal API",
     description="Academic Marketplace API",
-    version="2.1.0",
+    version="2.1.1",
     lifespan=lifespan,
 )
 
@@ -61,25 +62,29 @@ async def global_exception_handler(request: Request, exc: Exception):
         headers=headers,
     )
 
-# ═══ Mount all routers under /api/v1 ═══
-api_router = APIRouter(prefix="/api/v1")
-api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
-api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
-api_router.include_router(bids.router, prefix="/bids", tags=["Bids"])
-api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
-api_router.include_router(payments.router, prefix="/payments", tags=["Payments"])
-api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
-api_router.include_router(services.router, prefix="/services", tags=["Services"])
-api_router.include_router(feed.router, prefix="/feed", tags=["Feed"])
-api_router.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(api_router)
+# ═══ Helper to mount all routers ═══
+def mount_all(router_or_app):
+    router_or_app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+    router_or_app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+    router_or_app.include_router(bids.router, prefix="/bids", tags=["Bids"])
+    router_or_app.include_router(orders.router, prefix="/orders", tags=["Orders"])
+    router_or_app.include_router(payments.router, prefix="/payments", tags=["Payments"])
+    router_or_app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+    router_or_app.include_router(services.router, prefix="/services", tags=["Services"])
+    router_or_app.include_router(feed.router, prefix="/feed", tags=["Feed"])
+    router_or_app.include_router(users.router, prefix="/users", tags=["Users"])
 
-# Also mount auth at root for backward compatibility
-app.include_router(auth.router, prefix="/auth", tags=["Auth (legacy)"])
+# Mount at root level: /auth/login, /tasks, etc.
+mount_all(app)
+
+# Also mount under /api/v1: /api/v1/auth/login, /api/v1/tasks, etc.
+api_v1 = APIRouter(prefix="/api/v1")
+mount_all(api_v1)
+app.include_router(api_v1)
 
 @app.get("/")
 async def root():
-    return {"app": "MyHomeworkPal API", "version": "2.1.0", "status": "running", "docs": "/docs"}
+    return {"app": "MyHomeworkPal API", "version": "2.1.1", "status": "running", "docs": "/docs"}
 
 @app.get("/health")
 async def health():
