@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { paymentsAPI } from '@/services/api';
 
 const isWeb = Platform.OS === 'web';
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', error: '#EF4444' };
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const txns = [
-    { id: '1', desc: 'Calculus II homework', amount: -35, time: '2 hours ago', type: 'out' },
-    { id: '2', desc: 'Added funds', amount: 100, time: '1 day ago', type: 'in' },
-    { id: '3', desc: 'Python project delivery', amount: 75, time: '3 days ago', type: 'in' },
-    { id: '4', desc: 'Dispute resolution', amount: 20, time: '1 week ago', type: 'in' },
-  ];
+  const [wallet, setWallet] = useState<any>(null);
+  const [txns, setTxns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [walletRes, txnRes] = await Promise.allSettled([
+          paymentsAPI.wallet(),
+          paymentsAPI.transactions(),
+        ]);
+        if (walletRes.status === 'fulfilled') setWallet(walletRes.value.data);
+        if (txnRes.status === 'fulfilled') setTxns(txnRes.value.data.transactions || txnRes.value.data || []);
+      } catch {} finally { setLoading(false); }
+    })();
+  }, []);
+
+  const balance = wallet?.balance ?? 0;
+  const escrow = wallet?.escrowBalance ?? 0;
 
   return (
     <View style={s.page}>
@@ -23,50 +37,59 @@ export default function PaymentScreen() {
         <Text style={s.headerTitle}>Wallet</Text>
         <View style={{ width: 40 }} />
       </View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Card */}
-        <View style={s.cardWrap}>
-          <LinearGradient colors={['#4F46E5', '#6366F1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.walletCard}>
-            <View style={s.cardTop}>
-              <View style={s.cardChip}><Ionicons name="wallet" size={18} color="rgba(255,255,255,0.9)" /></View>
-              <Text style={s.cardBrand}>MyHomeworkPal</Text>
-            </View>
-            <Text style={s.balLabel}>Available Balance</Text>
-            <Text style={s.balAmount}>$234.50</Text>
-            <View style={s.cardFooter}>
-              <View><Text style={s.cardFieldLbl}>Escrow</Text><Text style={s.cardFieldVal}>$35.00</Text></View>
-              <View><Text style={s.cardFieldLbl}>Pending</Text><Text style={s.cardFieldVal}>$0.00</Text></View>
-              <View><Text style={s.cardFieldLbl}>Earned</Text><Text style={s.cardFieldVal}>$1,245</Text></View>
-            </View>
-          </LinearGradient>
-        </View>
 
-        {/* Actions */}
-        <View style={s.actionsRow}>
-          <ActionBtn icon="add-circle" label="Add Funds" color={C.accent} />
-          <ActionBtn icon="arrow-up-circle" label="Withdraw" color="#06B6D4" />
-          <ActionBtn icon="swap-horizontal" label="Transfer" color="#F59E0B" />
-          <ActionBtn icon="receipt" label="Invoices" color={C.primary} />
-        </View>
-
-        {/* Transactions */}
-        <View style={s.txHeader}><Text style={s.txTitle}>Recent Transactions</Text></View>
-        {txns.map((tx) => (
-          <View key={tx.id} style={s.txRow}>
-            <View style={[s.txIcon, { backgroundColor: tx.amount > 0 ? '#ECFDF5' : '#FEF2F2' }]}>
-              <Ionicons name={tx.amount > 0 ? 'arrow-down' : 'arrow-up'} size={16} color={tx.amount > 0 ? C.accent : C.error} />
-            </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={s.txDesc}>{tx.desc}</Text>
-              <Text style={s.txTime}>{tx.time}</Text>
-            </View>
-            <Text style={[s.txAmt, { color: tx.amount > 0 ? C.accent : C.text }]}>
-              {tx.amount > 0 ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
-            </Text>
+      {loading ? (
+        <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator size="large" color={C.primary} /></View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={s.cardWrap}>
+            <LinearGradient colors={['#4F46E5', '#6366F1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.walletCard}>
+              <View style={s.cardTop}>
+                <View style={s.cardChip}><Ionicons name="wallet" size={18} color="rgba(255,255,255,0.9)" /></View>
+                <Text style={s.cardBrand}>MyHomeworkPal</Text>
+              </View>
+              <Text style={s.balLabel}>Available Balance</Text>
+              <Text style={s.balAmount}>${balance.toFixed(2)}</Text>
+              <View style={s.cardFooter}>
+                <View><Text style={s.cardFieldLbl}>Escrow</Text><Text style={s.cardFieldVal}>${escrow.toFixed(2)}</Text></View>
+                <View><Text style={s.cardFieldLbl}>Pending</Text><Text style={s.cardFieldVal}>$0.00</Text></View>
+                <View><Text style={s.cardFieldLbl}>Currency</Text><Text style={s.cardFieldVal}>USD</Text></View>
+              </View>
+            </LinearGradient>
           </View>
-        ))}
-        <View style={{ height: 32 }} />
-      </ScrollView>
+
+          <View style={s.actionsRow}>
+            <ActionBtn icon="add-circle" label="Add Funds" color={C.accent} />
+            <ActionBtn icon="arrow-up-circle" label="Withdraw" color="#06B6D4" />
+            <ActionBtn icon="swap-horizontal" label="Transfer" color="#F59E0B" />
+            <ActionBtn icon="receipt" label="Invoices" color={C.primary} />
+          </View>
+
+          <View style={s.txHeader}><Text style={s.txTitle}>Recent Transactions</Text></View>
+          {txns.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+              <Ionicons name="receipt-outline" size={36} color={C.textMuted} />
+              <Text style={{ color: C.textMuted, marginTop: 8, fontSize: 14 }}>No transactions yet</Text>
+            </View>
+          ) : (
+            txns.map((tx: any, i: number) => (
+              <View key={tx.id || i} style={s.txRow}>
+                <View style={[s.txIcon, { backgroundColor: (tx.amount || 0) > 0 ? '#ECFDF5' : '#FEF2F2' }]}>
+                  <Ionicons name={(tx.amount || 0) > 0 ? 'arrow-down' : 'arrow-up'} size={16} color={(tx.amount || 0) > 0 ? C.accent : C.error} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={s.txDesc}>{tx.description || tx.desc || 'Transaction'}</Text>
+                  <Text style={s.txTime}>{tx.createdAt || tx.time || ''}</Text>
+                </View>
+                <Text style={[s.txAmt, { color: (tx.amount || 0) > 0 ? C.accent : C.text }]}>
+                  {(tx.amount || 0) > 0 ? '+' : ''}${Math.abs(tx.amount || 0).toFixed(2)}
+                </Text>
+              </View>
+            ))
+          )}
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }

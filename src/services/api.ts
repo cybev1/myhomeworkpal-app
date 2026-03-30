@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════════════════════════
+// MyHomeworkPal API Service v2.1.0
+// Fixed: auth endpoints, JSON login, register flow
+// ═══════════════════════════════════════════════════════════════
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
@@ -9,7 +13,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Token management
+// Token management — SecureStore on mobile, localStorage on web
 const getToken = async (): Promise<string | null> => {
   if (Platform.OS === 'web') {
     return localStorage.getItem('auth_token');
@@ -48,51 +52,31 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       await removeToken();
-      // Navigation will handle redirect via auth state
     }
     return Promise.reject(error);
   }
 );
 
 // ═══════════════════════════════════════
-// AUTH
+// AUTH — matches backend's actual endpoints
+// Backend expects JSON, returns { token, user }
 // ═══════════════════════════════════════
 export const authAPI = {
   register: (data: { email: string; password: string; name: string; role: 'student' | 'helper' }) =>
-    api.post('/auth/signup', {
+    api.post('/auth/register', {
       email: data.email,
       password: data.password,
-      full_name: data.name,
+      name: data.name,
       role: data.role,
     }),
 
-  login: async (data: { email: string; password: string }) => {
-    // Backend expects OAuth2 form data
-    const formData = new URLSearchParams();
-    formData.append('username', data.email);
-    formData.append('password', data.password);
+  login: (data: { email: string; password: string }) =>
+    api.post('/auth/login', {
+      email: data.email,
+      password: data.password,
+    }),
 
-    const res = await api.post('/auth/login', formData.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-    // Normalize response: backend returns { access_token, token_type }
-    // Store expects { token, user }
-    const token = res.data.access_token || res.data.token;
-    if (token) {
-      await setToken(token);
-      // Fetch user profile
-      const userRes = await api.get('/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return { data: { token, user: normalizeUser(userRes.data) } };
-    }
-    return res;
-  },
-
-  me: async () => {
-    const res = await api.get('/auth/me');
-    return { data: normalizeUser(res.data) };
-  },
+  me: () => api.get('/auth/me'),
 
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
@@ -108,24 +92,6 @@ export const authAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 };
-
-// Normalize backend user shape to frontend User interface
-function normalizeUser(u: any) {
-  return {
-    id: u.id || u._id || '',
-    email: u.email || '',
-    name: u.full_name || u.name || '',
-    role: u.role || 'student',
-    bio: u.bio || '',
-    skills: u.skills || [],
-    rating: u.rating || 0,
-    totalReviews: u.total_reviews || u.totalReviews || 0,
-    completedOrders: u.completed_orders || u.completedOrders || 0,
-    verified: u.verified || false,
-    avatar: u.avatar || '',
-    createdAt: u.created_at || u.createdAt || '',
-  };
-}
 
 // ═══════════════════════════════════════
 // HOMEWORK / TASKS

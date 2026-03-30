@@ -1,19 +1,19 @@
-// src/lib/api.ts
+// ═══════════════════════════════════════════════════════════════
+// MyHomeworkPal — Legacy API module (kept for backward compat)
+// Primary API is src/services/api.ts — this re-exports from there
+// ═══════════════════════════════════════════════════════════════
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
+import { API_CONFIG } from '@/constants/theme';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://myhomeworkpal-api-production.up.railway.app';
-
+const API_URL = API_CONFIG.BASE_URL;
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 
 export const api = axios.create({
-  baseURL: `${API_URL}/api/v1`,
+  baseURL: API_URL,
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use(
@@ -40,48 +40,26 @@ api.interceptors.response.use(
 export interface User {
   id: string;
   email: string;
-  full_name: string;
+  name: string;
   role: string;
 }
 
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface SignupRequest {
-  email: string;
-  password: string;
-  full_name: string;
-  role: string;
-}
-
-export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-}
-
+// Auth methods matching backend
 export const authApi = {
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
-    
-    const { data } = await api.post<AuthResponse>('/auth/login', formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-    
-    await AsyncStorage.setItem(TOKEN_KEY, data.access_token);
+  login: async (credentials: { email: string; password: string }) => {
+    const { data } = await api.post('/auth/login', credentials);
+    await AsyncStorage.setItem(TOKEN_KEY, data.token);
     return data;
   },
 
-  signup: async (userData: SignupRequest): Promise<User> => {
-    const { data } = await api.post<User>('/auth/signup', userData);
+  signup: async (userData: { email: string; password: string; name: string; role: string }) => {
+    const { data } = await api.post('/auth/register', userData);
+    await AsyncStorage.setItem(TOKEN_KEY, data.token);
     return data;
   },
 
   getMe: async (): Promise<User> => {
-    const { data } = await api.get<User>('/auth/me');
+    const { data } = await api.get('/auth/me');
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(data));
     return data;
   },

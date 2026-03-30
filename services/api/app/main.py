@@ -1,6 +1,9 @@
+# ═══════════════════════════════════════════════════════════════
+# MyHomeworkPal API v2.1.0 — Fixed route prefixes + CORS
+# ═══════════════════════════════════════════════════════════════
 import os
 import traceback
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -15,7 +18,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="MyHomeworkPal API",
     description="Academic Marketplace API",
-    version="2.0.0",
+    version="2.1.0",
     lifespan=lifespan,
 )
 
@@ -30,6 +33,7 @@ else:
         "http://localhost:8081",
         "http://localhost:19006",
         "http://localhost:3000",
+        "http://localhost:8000",
     ]
 
 app.add_middleware(
@@ -57,20 +61,25 @@ async def global_exception_handler(request: Request, exc: Exception):
         headers=headers,
     )
 
-# Routers
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
-app.include_router(bids.router, prefix="/bids", tags=["Bids"])
-app.include_router(orders.router, prefix="/orders", tags=["Orders"])
-app.include_router(payments.router, prefix="/payments", tags=["Payments"])
-app.include_router(chat.router, prefix="/chat", tags=["Chat"])
-app.include_router(services.router, prefix="/services", tags=["Services"])
-app.include_router(feed.router, prefix="/feed", tags=["Feed"])
-app.include_router(users.router, prefix="/users", tags=["Users"])
+# ═══ Mount all routers under /api/v1 ═══
+api_router = APIRouter(prefix="/api/v1")
+api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
+api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+api_router.include_router(bids.router, prefix="/bids", tags=["Bids"])
+api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+api_router.include_router(payments.router, prefix="/payments", tags=["Payments"])
+api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
+api_router.include_router(services.router, prefix="/services", tags=["Services"])
+api_router.include_router(feed.router, prefix="/feed", tags=["Feed"])
+api_router.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(api_router)
+
+# Also mount auth at root for backward compatibility
+app.include_router(auth.router, prefix="/auth", tags=["Auth (legacy)"])
 
 @app.get("/")
 async def root():
-    return {"app": "MyHomeworkPal API", "version": "2.0.0", "status": "running", "docs": "/docs"}
+    return {"app": "MyHomeworkPal API", "version": "2.1.0", "status": "running", "docs": "/docs"}
 
 @app.get("/health")
 async def health():

@@ -127,8 +127,14 @@ async def dispute_order(order_id: str, req: DisputeRequest, user: User = Depends
     await db.flush()
     return {"id": order.id, "status": "disputed", "message": "Dispute opened, admin will review"}
 
+class ReviewRequest(BaseModel):
+    rating: int
+    comment: str = ""
+
 @router.post("/{order_id}/review")
-async def create_review(order_id: str, rating: int, comment: str = "", user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_review(order_id: str, req: ReviewRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rating = req.rating
+    comment = req.comment
     from app.models.database import Review
     result = await db.execute(select(Order).where(Order.id == order_id, Order.student_id == user.id))
     order = result.scalar_one_or_none()

@@ -1,5 +1,9 @@
+// ═══════════════════════════════════════════════════════════════
+// MyHomeworkPal Stores v2.1.0
+// Fixed: auth flow matches backend {token, user} response
+// ═══════════════════════════════════════════════════════════════
 import { create } from 'zustand';
-import { authAPI, setToken, removeToken, getToken } from '@/services/api';
+import { authAPI, setToken, removeToken, getToken, tasksAPI, chatAPI } from '@/services/api';
 
 export interface User {
   id: string;
@@ -20,7 +24,6 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string; role: 'student' | 'helper' }) => Promise<void>;
   logout: () => Promise<void>;
@@ -34,16 +37,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   login: async (email, password) => {
+    // Backend returns { token, user }
     const { data } = await authAPI.login({ email, password });
-    // Token already stored by authAPI.login
+    await setToken(data.token);
     set({ user: data.user, isAuthenticated: true });
   },
 
   register: async (registerData) => {
-    // Backend signup returns user, then we need to login to get token
-    await authAPI.register(registerData);
-    // Now login with the same credentials
-    const { data } = await authAPI.login({ email: registerData.email, password: registerData.password });
+    // Backend register also returns { token, user }
+    const { data } = await authAPI.register(registerData);
+    await setToken(data.token);
     set({ user: data.user, isAuthenticated: true });
   },
 
@@ -96,7 +99,6 @@ interface TaskState {
   currentTask: Task | null;
   isLoading: boolean;
   filters: { category?: string; status?: string; sort?: string };
-
   fetchTasks: (params?: any) => Promise<void>;
   fetchTask: (id: string) => Promise<void>;
   setFilters: (filters: any) => void;
@@ -111,17 +113,17 @@ export const useTaskStore = create<TaskState>((set) => ({
   fetchTasks: async (params) => {
     set({ isLoading: true });
     try {
-      const { data } = await (await import('@/services/api')).tasksAPI.list(params);
-      set({ tasks: data.tasks || data, isLoading: false });
+      const { data } = await tasksAPI.list(params);
+      set({ tasks: data.tasks || data || [], isLoading: false });
     } catch {
-      set({ isLoading: false });
+      set({ tasks: [], isLoading: false });
     }
   },
 
   fetchTask: async (id) => {
     set({ isLoading: true });
     try {
-      const { data } = await (await import('@/services/api')).tasksAPI.get(id);
+      const { data } = await tasksAPI.get(id);
       set({ currentTask: data, isLoading: false });
     } catch {
       set({ isLoading: false });
@@ -154,7 +156,6 @@ interface ChatState {
   conversations: Conversation[];
   currentMessages: Message[];
   isLoading: boolean;
-
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId: string) => Promise<void>;
   addMessage: (message: Message) => void;
@@ -168,20 +169,20 @@ export const useChatStore = create<ChatState>((set) => ({
   fetchConversations: async () => {
     set({ isLoading: true });
     try {
-      const { data } = await (await import('@/services/api')).chatAPI.conversations();
-      set({ conversations: data, isLoading: false });
+      const { data } = await chatAPI.conversations();
+      set({ conversations: data.conversations || data || [], isLoading: false });
     } catch {
-      set({ isLoading: false });
+      set({ conversations: [], isLoading: false });
     }
   },
 
   fetchMessages: async (conversationId) => {
     set({ isLoading: true });
     try {
-      const { data } = await (await import('@/services/api')).chatAPI.messages(conversationId);
-      set({ currentMessages: data, isLoading: false });
+      const { data } = await chatAPI.messages(conversationId);
+      set({ currentMessages: data.messages || data || [], isLoading: false });
     } catch {
-      set({ isLoading: false });
+      set({ currentMessages: [], isLoading: false });
     }
   },
 

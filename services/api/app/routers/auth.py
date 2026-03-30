@@ -90,3 +90,8 @@ async def update_profile(
     await db.flush()
     await db.refresh(user)
     return user_response(user)
+
+# Alias for frontend compatibility
+@router.post("/signup")
+async def register_alias(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    return await register(req, db)
