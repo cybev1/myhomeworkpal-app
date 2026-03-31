@@ -1,155 +1,89 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  FlatList, KeyboardAvoidingView, Platform,
+  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
-import { Avatar } from '@/components/UI';
+import { chatAPI } from '@/services/api';
+import { useAuthStore } from '@/context/stores';
 
-interface ChatMessage {
-  id: string;
-  content: string;
-  senderId: string;
-  type: 'text' | 'file' | 'system';
-  createdAt: string;
-}
+const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', accent: '#10B981' };
+
+interface ChatMessage { id: string; content: string; senderId: string; type: 'text' | 'file' | 'system'; createdAt: string; }
 
 export default function ChatScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id: convId } = useLocalSearchParams();
+  const { user } = useAuthStore();
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const pollRef = useRef<any>(null);
+  const currentUserId = user?.id || 'me';
 
-  const currentUserId = 'me';
-  const otherUser = { id: '10', name: 'Dr. Chen', online: true, verified: true };
-
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', content: 'Hi! I saw your Calculus II task. I\'d love to help!', senderId: '10', type: 'text', createdAt: new Date(Date.now() - 3600000).toISOString() },
-    { id: '2', content: 'Great! Can you handle integration by parts and trig sub?', senderId: 'me', type: 'text', createdAt: new Date(Date.now() - 3500000).toISOString() },
-    { id: '3', content: 'Absolutely! That\'s my specialty. I\'ll provide step-by-step solutions with explanations for each technique.', senderId: '10', type: 'text', createdAt: new Date(Date.now() - 3400000).toISOString() },
-    { id: '4', content: 'I\'ve started working on the integration problems. Should be done by tonight!', senderId: '10', type: 'text', createdAt: new Date(Date.now() - 600000).toISOString() },
-    { id: 'sys1', content: 'Payment of $35 held in escrow', senderId: 'system', type: 'system', createdAt: new Date(Date.now() - 500000).toISOString() },
-  ]);
-
-  const sendMessage = () => {
-    if (!message.trim()) return;
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
-      content: message.trim(),
-      senderId: currentUserId,
-      type: 'text',
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, newMsg]);
-    setMessage('');
+  const fetchMessages = async (quiet = false) => {
+    if (!convId) return;
+    if (!quiet) setLoading(true);
+    try {
+      const { data } = await chatAPI.messages(convId as string);
+      setMessages(data.messages || data || []);
+    } catch {} finally { if (!quiet) setLoading(false); }
   };
+
+  useEffect(() => {
+    fetchMessages();
+    pollRef.current = setInterval(() => fetchMessages(true), 5000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [convId]);
+
+  const sendMessage = async () => {
+    if (!message.trim() || sending) return;
+    const text = message.trim();
+    setMessage('');
+    setSending(true);
+    const tempMsg: ChatMessage = { id: `temp_${Date.now()}`, content: text, senderId: currentUserId, type: 'text', createdAt: new Date().toISOString() };
+    setMessages((prev) => [...prev, tempMsg]);
+    try { await chatAPI.send(convId as string, { content: text, type: 'text' }); fetchMessages(true); } catch {} finally { setSending(false); }
+  };
+
+  const timeStr = (d: string) => d ? new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isMine = item.senderId === currentUserId;
-    const isSystem = item.type === 'system';
-
-    if (isSystem) {
-      return (
-        <View style={styles.systemMsg}>
-          <Ionicons name="shield-checkmark" size={14} color={'#10B981'} />
-          <Text style={styles.systemMsgText}>{item.content}</Text>
-        </View>
-      );
-    }
-
+    if (item.type === 'system') return (<View style={s.systemMsg}><Ionicons name="shield-checkmark" size={14} color={C.accent} /><Text style={s.systemText}>{item.content}</Text></View>);
     return (
-      <View style={[styles.msgRow, isMine && styles.msgRowMine]}>
-        {!isMine && <Avatar name={otherUser.name} size={32} />}
-        <View style={[styles.msgBubble, isMine ? styles.msgBubbleMine : styles.msgBubbleOther]}>
-          {isMine ? (
-            <LinearGradient
-              colors={['#4F46E5', '#6366F1']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.msgGradient}
-            >
-              <Text style={[styles.msgText, { color: '#fff' }]}>{item.content}</Text>
-            </LinearGradient>
-          ) : (
-            <Text style={styles.msgText}>{item.content}</Text>
-          )}
+      <View style={[s.msgRow, isMine && s.msgRowMine]}>
+        {!isMine && <View style={s.msgAv}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>H</Text></View>}
+        <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleOther]}>
+          <Text style={[s.msgText, isMine && { color: '#fff' }]}>{item.content}</Text>
+          <Text style={[s.msgTime, isMine && { color: 'rgba(255,255,255,0.6)' }]}>{timeStr(item.createdAt)}</Text>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={'#4A5068'} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.userInfo}>
-          <Avatar name={otherUser.name} size={36} online={otherUser.online} verified={otherUser.verified} />
-          <View style={{ marginLeft: Spacing.sm }}>
-            <Text style={styles.userName}>{otherUser.name}</Text>
-            <Text style={styles.userStatus}>
-              {otherUser.online ? 'Online' : 'Last seen recently'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="call-outline" size={20} color={'#4A5068'} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="ellipsis-vertical" size={20} color={'#4A5068'} />
-          </TouchableOpacity>
+    <View style={s.container}>
+      <View style={s.header}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Ionicons name="arrow-back" size={22} color={C.textSoft} /></TouchableOpacity>
+        <View style={s.headerInfo}>
+          <View style={s.headerAv}><Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>H</Text></View>
+          <View><Text style={s.headerName}>Conversation</Text><Text style={{ fontSize: 11, color: C.accent, fontWeight: '500' }}>Online</Text></View>
         </View>
+        <TouchableOpacity style={s.backBtn}><Ionicons name="ellipsis-vertical" size={20} color={C.textSoft} /></TouchableOpacity>
       </View>
-
-      {/* Messages */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={0}
-      >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.msgList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        />
-
-        {/* Input bar */}
-        <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="add-circle-outline" size={26} color={'#8B91A8'} />
-          </TouchableOpacity>
-          <View style={styles.inputWrap}>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Type a message..."
-              placeholderTextColor={'#8B91A8'}
-              style={styles.input}
-              multiline
-              maxLength={2000}
-            />
-          </View>
-          <TouchableOpacity
-            onPress={sendMessage}
-            style={[styles.sendBtn, message.trim() && styles.sendBtnActive]}
-            disabled={!message.trim()}
-          >
-            {message.trim() ? (
-              <LinearGradient colors={['#4F46E5', '#6366F1']} style={styles.sendGradient}>
-                <Ionicons name="send" size={18} color="#fff" />
-              </LinearGradient>
-            ) : (
-              <Ionicons name="mic-outline" size={22} color={'#8B91A8'} />
-            )}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        {loading ? <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={C.primary} /></View>
+        : messages.length === 0 ? <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}><Ionicons name="chatbubbles-outline" size={48} color={C.textMuted} /><Text style={{ color: C.textMuted, marginTop: 12, textAlign: 'center', fontSize: 15 }}>Start the conversation! Discuss task details, timeline, and expectations.</Text></View>
+        : <FlatList ref={flatListRef} data={messages} keyExtractor={(item) => item.id} renderItem={renderMessage} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }} onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })} />}
+        <View style={s.inputBar}>
+          <TouchableOpacity><Ionicons name="add-circle-outline" size={26} color={C.textMuted} /></TouchableOpacity>
+          <View style={s.inputWrap}><TextInput value={message} onChangeText={setMessage} placeholder="Type a message..." placeholderTextColor={C.textMuted} style={s.input} multiline maxLength={2000} onSubmitEditing={sendMessage} returnKeyType="send" /></View>
+          <TouchableOpacity onPress={sendMessage} disabled={!message.trim() || sending}>
+            {message.trim() ? <View style={s.sendCircle}><Ionicons name="send" size={16} color="#fff" /></View> : <Ionicons name="mic-outline" size={22} color={C.textMuted} />}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -157,54 +91,25 @@ export default function ChatScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.base, paddingTop: Platform.OS === 'ios' ? 56 : 44,
-    paddingBottom: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#E4E7F0',
-    backgroundColor: '#F7F8FC',
-  },
-  backBtn: { padding: 8 },
-  userInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm },
-  userName: { fontSize: Fonts.sizes.base, fontWeight: '700', color: '#1A1D2B' },
-  userStatus: { fontSize: Fonts.sizes.xs, color: '#10B981', fontWeight: '500' },
-  headerActions: { flexDirection: 'row', gap: Spacing.sm },
-  headerBtn: { padding: 8 },
-  msgList: { paddingHorizontal: Spacing.base, paddingVertical: Spacing.md },
-  msgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: Spacing.md, gap: 8 },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 44, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.bgSoft },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  headerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerAv: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  headerName: { fontSize: 15, fontWeight: '700', color: C.text },
+  msgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 12, gap: 8 },
   msgRowMine: { justifyContent: 'flex-end' },
-  msgBubble: { maxWidth: '75%', borderRadius: Radius.xl, overflow: 'hidden' },
-  msgBubbleMine: {},
-  msgBubbleOther: {
-    backgroundColor: '#F0F2F8', padding: Spacing.md,
-    borderWidth: 1, borderColor: '#E4E7F0',
-  },
-  msgGradient: { padding: Spacing.md, borderRadius: Radius.xl },
-  msgText: { fontSize: Fonts.sizes.base, color: '#4A5068', lineHeight: 22 },
-  systemMsg: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: Spacing.sm, marginBottom: Spacing.md,
-  },
-  systemMsgText: { fontSize: Fonts.sizes.xs, color: '#8B91A8' },
-  inputBar: {
-    flexDirection: 'row', alignItems: 'flex-end',
-    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    paddingBottom: Platform.OS === 'ios' ? 30 : Spacing.sm,
-    borderTopWidth: 1, borderTopColor: '#E4E7F0',
-    backgroundColor: '#F7F8FC', gap: 8,
-  },
-  attachBtn: { paddingBottom: 6 },
-  inputWrap: {
-    flex: 1, backgroundColor: '#F0F2F8', borderRadius: Radius.xl,
-    paddingHorizontal: Spacing.base, paddingVertical: 8,
-    borderWidth: 1, borderColor: '#E4E7F0', maxHeight: 120,
-  },
-  input: { fontSize: Fonts.sizes.base, color: '#1A1D2B', maxHeight: 100 },
-  sendBtn: { paddingBottom: 4 },
-  sendBtnActive: {},
-  sendGradient: {
-    width: 38, height: 38, borderRadius: 19,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  msgAv: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  bubble: { maxWidth: '75%', borderRadius: 18, padding: 12, paddingBottom: 6 },
+  bubbleMine: { backgroundColor: C.primary, borderBottomRightRadius: 4 },
+  bubbleOther: { backgroundColor: C.bgSoft, borderWidth: 1, borderColor: C.border, borderBottomLeftRadius: 4 },
+  msgText: { fontSize: 15, color: C.text, lineHeight: 22 },
+  msgTime: { fontSize: 10, color: C.textMuted, marginTop: 4, alignSelf: 'flex-end' },
+  systemMsg: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, marginBottom: 12 },
+  systemText: { fontSize: 12, color: C.textMuted },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 12, paddingVertical: 8, paddingBottom: Platform.OS === 'ios' ? 30 : 8, borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.bgSoft, gap: 8 },
+  inputWrap: { flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: C.border, maxHeight: 120 },
+  input: { fontSize: 15, color: C.text, maxHeight: 100 },
+  sendCircle: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
 });

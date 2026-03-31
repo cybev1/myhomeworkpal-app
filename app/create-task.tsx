@@ -22,7 +22,9 @@ export default function CreateTaskScreen() {
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState<{ name: string; uri: string; size?: number }[]>([]);
+  const [files, setFiles] = useState<{ name: string; uri: string; size?: number; type?: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
 
   const pickFile = async () => {
     try {
@@ -38,7 +40,7 @@ export default function CreateTaskScreen() {
       });
       if (!result.canceled && result.assets) {
         const newFiles = result.assets.map((a) => ({
-          name: a.fileName || `file_${Date.now()}.${a.type === 'image' ? 'jpg' : 'mp4'}`,
+          name: a.fileName || decodeURIComponent((a.uri || "").split("/").pop() || "") || `attachment_${Date.now()}.jpg`,
           uri: a.uri,
           size: a.fileSize,
         }));
@@ -76,19 +78,23 @@ export default function CreateTaskScreen() {
 
       // Upload files if any
       if (files.length > 0 && res.data?.id) {
-        for (const file of files) {
+        setUploading(true);
+        for (let i = 0; i < files.length; i++) {
+          setUploadProgress(`Uploading ${i + 1}/${files.length}...`);
           try {
             const formData = new FormData();
             formData.append('file', {
-              uri: file.uri,
-              name: file.name,
-              type: 'application/octet-stream',
+              uri: files[i].uri,
+              name: files[i].name,
+              type: files[i].type || 'application/octet-stream',
             } as any);
             await tasksAPI.uploadFile(res.data.id, formData);
           } catch (e) {
             console.log('File upload error:', e);
           }
         }
+        setUploading(false);
+        setUploadProgress('');
       }
 
       Alert.alert('Task Posted!', 'Your task is now live. Experts will start bidding soon.', [
@@ -194,7 +200,7 @@ export default function CreateTaskScreen() {
           {loading ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <ActivityIndicator color="#fff" />
-              <Text style={s.submitText}>Posting...</Text>
+              <Text style={s.submitText}>{uploading ? uploadProgress : 'Posting...'}</Text>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
