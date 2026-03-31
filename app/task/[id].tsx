@@ -9,6 +9,10 @@ import { tasksAPI, bidsAPI, ordersAPI, chatAPI } from '@/services/api';
 import { useAuthStore } from '@/context/stores';
 
 const isWeb = Platform.OS === 'web';
+const showAlert = (t: string, m: string, onOk?: () => void) => {
+  if (isWeb) { window.alert(t + '\n' + m); onOk?.(); }
+  else Alert.alert(t, m, onOk ? [{ text: 'OK', onPress: onOk }] : undefined);
+};
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', accentSoft: '#ECFDF5', gold: '#F59E0B', cyan: '#06B6D4', error: '#EF4444' };
 
 export default function TaskDetailScreen() {
@@ -43,7 +47,7 @@ export default function TaskDetailScreen() {
   useEffect(() => { fetchData(); }, [id]);
 
   const handlePlaceBid = async () => {
-    if (!bidAmount || !bidMessage) { Alert.alert('Required', 'Enter your bid amount and a message'); return; }
+    if (!bidAmount || !bidMessage) { showAlert('Required', 'Enter your bid amount and a message'); return; }
     setSubmitting(true);
     try {
       await bidsAPI.create(id as string, {
@@ -51,35 +55,39 @@ export default function TaskDetailScreen() {
         message: bidMessage,
         delivery_days: parseInt(bidDays) || 3,
       });
-      Alert.alert('Bid Submitted!', 'The student will review your proposal.');
+      showAlert('Bid Submitted!', 'The student will review your proposal.');
       setShowBidForm(false);
       setBidAmount(''); setBidMessage(''); setBidDays('3');
       fetchData();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to submit bid');
+      showAlert('Error', err.response?.data?.detail || 'Failed to submit bid');
     } finally { setSubmitting(false); }
   };
 
   const handleAcceptBid = async (bid: any) => {
-    Alert.alert('Accept Bid', `Accept ${bid.helper?.name || 'this helper'}'s bid for $${bid.amount}? Funds will be held in escrow.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Accept & Pay', style: 'default', onPress: async () => {
-        try {
-          await bidsAPI.accept(bid.id);
-          // Create order
-          await ordersAPI.create({
-            task_id: id as string,
-            helper_id: bid.helperId || bid.helper?.id,
-            amount: bid.amount,
-          });
-          Alert.alert('Order Started!', 'Your task is now in progress. Chat with your helper to track delivery.', [
-            { text: 'View Orders', onPress: () => router.push('/(tabs)/orders') },
-          ]);
-        } catch (err: any) {
-          Alert.alert('Error', err.response?.data?.detail || 'Failed to accept bid');
-        }
-      }},
-    ]);
+    const doAccept = async () => {
+      try {
+        await bidsAPI.accept(bid.id);
+        await ordersAPI.create({
+          task_id: id as string,
+          helper_id: bid.helperId || bid.helper?.id,
+          amount: bid.amount,
+        });
+        showAlert('Order Started!', 'Your task is now in progress.', () => router.push('/(tabs)/orders'));
+      } catch (err: any) {
+        showAlert('Error', err.response?.data?.detail || 'Failed to accept bid');
+      }
+    };
+    if (isWeb) {
+      if (window.confirm(`Accept ${bid.helper?.name || 'this helper'}'s bid for $${bid.amount}? Funds will be held in escrow.`)) {
+        await doAccept();
+      }
+    } else {
+      Alert.alert('Accept Bid', `Accept bid for $${bid.amount}?`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Accept & Pay', onPress: doAccept },
+      ]);
+    }
   };
 
   const handleRejectBid = async (bidId: string) => {
@@ -94,7 +102,7 @@ export default function TaskDetailScreen() {
       const { data } = await chatAPI.startConversation(helperId);
       router.push(`/chat/${data.id || data._id}`);
     } catch {
-      Alert.alert('Chat', 'Could not start conversation. Try again.');
+      showAlert('Chat', 'Could not start conversation. Try again.');
     }
   };
 

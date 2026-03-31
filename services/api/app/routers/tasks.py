@@ -7,6 +7,35 @@ from datetime import datetime
 from app.models.database import get_db, Task, User, Bid
 from app.services.auth_service import get_current_user
 
+def parse_deadline(val):
+    """Parse flexible deadline input: ISO date, days count, or free text"""
+    if not val:
+        return None
+    val = val.strip()
+    # Try ISO format first
+    try:
+        return datetime.fromisoformat(val)
+    except (ValueError, TypeError):
+        pass
+    # Try as number of days
+    try:
+        days = int(val)
+        if 1 <= days <= 365:
+            return datetime.utcnow() + __import__('datetime').timedelta(days=days)
+    except (ValueError, TypeError):
+        pass
+    # Try common date formats
+    for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d', '%b %d'):
+        try:
+            d = datetime.strptime(val, fmt)
+            if d.year == 1900:  # No year given
+                d = d.replace(year=datetime.utcnow().year)
+            return d
+        except ValueError:
+            continue
+    # Default: 7 days from now
+    return datetime.utcnow() + __import__('datetime').timedelta(days=7)
+
 router = APIRouter()
 
 class CreateTaskRequest(BaseModel):
@@ -43,7 +72,7 @@ async def create_task(req: CreateTaskRequest, user: User = Depends(get_current_u
     task = Task(
         title=req.title, description=req.description,
         category=req.category, budget=req.budget,
-        deadline=datetime.fromisoformat(req.deadline) if req.deadline else None,
+        deadline=parse_deadline(req.deadline),
         student_id=user.id,
     )
     db.add(task)

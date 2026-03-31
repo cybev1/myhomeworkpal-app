@@ -23,14 +23,20 @@ export default function AccountScreen() {
     })();
   }, []);
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: async () => {
-        await logout();
-        router.replace('/');
-      }},
-    ]);
+  const handleLogout = async () => {
+    // Alert.alert doesn't work on web — use confirm() instead
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Are you sure you want to sign out?')
+      : await new Promise((resolve) => {
+          Alert.alert('Logout', 'Are you sure you want to sign out?', [
+            { text: 'Cancel', onPress: () => resolve(false) },
+            { text: 'Sign Out', style: 'destructive', onPress: () => resolve(true) },
+          ]);
+        });
+    if (confirmed) {
+      await logout();
+      router.replace('/');
+    }
   };
 
   const menus = [

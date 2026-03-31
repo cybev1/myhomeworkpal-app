@@ -6,6 +6,16 @@ import * as ImagePicker from 'expo-image-picker';
 import { tasksAPI } from '@/services/api';
 
 const isWeb = Platform.OS === 'web';
+
+// Cross-platform alert (Alert.alert doesn't work on web)
+const showAlert = (title: string, message: string, onOk?: () => void) => {
+  if (isWeb) {
+    window.alert(title + '\n' + message);
+    if (onOk) onOk();
+  } else {
+    Alert.alert(title, message, onOk ? [{ text: 'OK', onPress: onOk }] : undefined);
+  }
+};
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', accentSoft: '#ECFDF5' };
 const cats = [
   { id: 'math', label: 'Mathematics', color: '#4F46E5' }, { id: 'cs', label: 'Computer Science', color: '#06B6D4' },
@@ -22,15 +32,13 @@ export default function CreateTaskScreen() {
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState<{ name: string; uri: string; size?: number; type?: string }[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState('');
+  const [files, setFiles] = useState<{ name: string; uri: string; size?: number }[]>([]);
 
   const pickFile = async () => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission needed', 'Please allow access to your photos to upload files.');
+        showAlert('Permission needed', 'Please allow access to your photos to upload files.');
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -40,7 +48,7 @@ export default function CreateTaskScreen() {
       });
       if (!result.canceled && result.assets) {
         const newFiles = result.assets.map((a) => ({
-          name: a.fileName || decodeURIComponent((a.uri || "").split("/").pop() || "") || `attachment_${Date.now()}.jpg`,
+          name: a.fileName || `file_${Date.now()}.${a.type === 'image' ? 'jpg' : 'mp4'}`,
           uri: a.uri,
           size: a.fileSize,
         }));
@@ -63,10 +71,10 @@ export default function CreateTaskScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!title) { Alert.alert('Required', 'Please enter a task title'); return; }
-    if (!desc) { Alert.alert('Required', 'Please describe your task'); return; }
-    if (!category) { Alert.alert('Required', 'Please select a category'); return; }
-    if (!budget) { Alert.alert('Required', 'Please set a budget'); return; }
+    if (!title) { showAlert('Required', 'Please enter a task title'); return; }
+    if (!desc) { showAlert('Required', 'Please describe your task'); return; }
+    if (!category) { showAlert('Required', 'Please select a category'); return; }
+    if (!budget) { showAlert('Required', 'Please set a budget'); return; }
 
     setLoading(true);
     try {
@@ -78,30 +86,24 @@ export default function CreateTaskScreen() {
 
       // Upload files if any
       if (files.length > 0 && res.data?.id) {
-        setUploading(true);
-        for (let i = 0; i < files.length; i++) {
-          setUploadProgress(`Uploading ${i + 1}/${files.length}...`);
+        for (const file of files) {
           try {
             const formData = new FormData();
             formData.append('file', {
-              uri: files[i].uri,
-              name: files[i].name,
-              type: files[i].type || 'application/octet-stream',
+              uri: file.uri,
+              name: file.name,
+              type: 'application/octet-stream',
             } as any);
             await tasksAPI.uploadFile(res.data.id, formData);
           } catch (e) {
             console.log('File upload error:', e);
           }
         }
-        setUploading(false);
-        setUploadProgress('');
       }
 
-      Alert.alert('Task Posted!', 'Your task is now live. Experts will start bidding soon.', [
-        { text: 'View Tasks', onPress: () => router.replace('/(tabs)/explore') },
-      ]);
+      showAlert('Task Posted!', 'Your task is now live. Experts will start bidding soon.', () => router.replace('/(tabs)/explore'));
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to create task. Please try again.');
+      showAlert('Error', err.response?.data?.detail || 'Failed to create task. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -200,7 +202,7 @@ export default function CreateTaskScreen() {
           {loading ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <ActivityIndicator color="#fff" />
-              <Text style={s.submitText}>{uploading ? uploadProgress : 'Posting...'}</Text>
+              <Text style={s.submitText}>Posting...</Text>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
