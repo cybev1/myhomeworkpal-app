@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, Redirect } from 'expo-router';
 import { useAuthStore } from '@/context/stores';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -39,9 +39,7 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (isAuthenticated) router.replace('/(tabs)');
-  }, [isAuthenticated]);
+  // Redirect handled below with <Redirect> component (safe for SSR/first render)
 
   useEffect(() => {
     if (isWeb) {
@@ -60,6 +58,9 @@ export default function LandingPage() {
       return () => { document.head.removeChild(s); };
     }
   }, []);
+
+  // If logged in, go straight to dashboard (safe — waits for layout mount)
+  if (isAuthenticated) return <Redirect href="/(tabs)" />;
 
   return (
     <ScrollView style={styles.page} showsVerticalScrollIndicator={false}>
