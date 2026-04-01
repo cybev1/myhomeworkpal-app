@@ -231,6 +231,28 @@ export default function OrderWorkspace() {
               <Text style={{ fontSize: 14, color: '#78350F', lineHeight: 22 }}>{order.revisionMessage}</Text>
             </View>
           )}
+          {/* Fee breakdown */}
+          {order.platformFee !== undefined && (
+            <View style={s.detailCard}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: C.text, marginBottom: 8 }}>Payment Breakdown</Text>
+              <DetailRow label="Order Amount" value={'$' + order.amount} />
+              <DetailRow label={'Platform Fee (' + (order.feePercent || 20) + '%)'} value={'-$' + (order.platformFee || 0).toFixed(2)} />
+              <View style={{ height: 1, backgroundColor: C.border, marginVertical: 6 }} />
+              <DetailRow label="Helper Receives" value={'$' + (order.helperPayout || 0).toFixed(2)} />
+            </View>
+          )}
+
+          {/* Business rules */}
+          <View style={s.detailCard}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.text, marginBottom: 8 }}>Order Terms</Text>
+            <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Ionicons name="refresh-circle" size={16} color={C.cyan} /><Text style={{ fontSize: 13, color: C.textSoft }}>{order.revisionsUsed || 0}/{order.maxRevisions || 2} free revisions used</Text></View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Ionicons name="time" size={16} color={C.gold} /><Text style={{ fontSize: 13, color: C.textSoft }}>Auto-approval {order.autoApproveDays || 3} days after delivery</Text></View>
+              {order.autoApproveAt && order.status === 'delivered' && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Ionicons name="alarm" size={16} color="#F97316" /><Text style={{ fontSize: 13, color: '#F97316', fontWeight: '600' }}>Auto-approves: {new Date(order.autoApproveAt).toLocaleDateString()}</Text></View>}
+              {order.clearanceDate && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Ionicons name="lock-closed" size={16} color={C.textMuted} /><Text style={{ fontSize: 13, color: C.textSoft }}>Funds available for withdrawal: {new Date(order.clearanceDate).toLocaleDateString()}</Text></View>}
+            </View>
+          </View>
+
           <View style={[s.detailCard, { backgroundColor: C.accentSoft, borderColor: '#D1FAE5' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="shield-checkmark" size={20} color={C.accent} />
