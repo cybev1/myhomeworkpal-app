@@ -100,16 +100,53 @@ export default function OrderDetailScreen() {
           </View>
         </View>
 
+        {/* Task title */}
+        {order.title && <Text style={{ fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 16 }}>{order.title}</Text>}
+
+        {/* People */}
+        {(order.helperName || order.studentName) && (
+          <View style={[s.card, { flexDirection: 'row', gap: 16 }]}>
+            {order.studentName && (
+              <View style={{ flex: 1 }}>
+                <Text style={s.label}>Student</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{order.studentName[0]}</Text></View>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: C.text }}>{order.studentName}</Text>
+                </View>
+              </View>
+            )}
+            {order.helperName && (
+              <View style={{ flex: 1 }}>
+                <Text style={s.label}>Helper</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{order.helperName[0]}</Text></View>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: C.text }}>{order.helperName}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Revision message */}
+        {order.revisionMessage && order.status === 'revision' && (
+          <View style={[s.card, { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Ionicons name="refresh-circle" size={20} color="#F97316" />
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#9A3412' }}>Revision Requested</Text>
+            </View>
+            <Text style={{ fontSize: 14, color: '#78350F', lineHeight: 22 }}>{order.revisionMessage}</Text>
+          </View>
+        )}
+
         {/* Order info */}
         <View style={s.card}>
           <View style={s.row}><Text style={s.label}>Amount</Text><Text style={s.value}>${order.amount}</Text></View>
           <View style={s.divider} />
-          <View style={s.row}><Text style={s.label}>Order ID</Text><Text style={[s.value, { fontSize: 12, color: C.textMuted }]}>{order.id?.slice(0, 8)}...</Text></View>
-          <View style={s.divider} />
           <View style={s.row}><Text style={s.label}>Deadline</Text><Text style={s.value}>{order.deliveryDeadline ? new Date(order.deliveryDeadline).toLocaleDateString() : 'Flexible'}</Text></View>
           {order.deliveredAt && <><View style={s.divider} /><View style={s.row}><Text style={s.label}>Delivered</Text><Text style={s.value}>{new Date(order.deliveredAt).toLocaleDateString()}</Text></View></>}
+          {order.completedAt && <><View style={s.divider} /><View style={s.row}><Text style={s.label}>Completed</Text><Text style={s.value}>{new Date(order.completedAt).toLocaleDateString()}</Text></View></>}
           <View style={s.divider} />
-          <View style={s.row}><Text style={s.label}>Created</Text><Text style={s.value}>{new Date(order.createdAt).toLocaleDateString()}</Text></View>
+          <View style={s.row}><Text style={s.label}>Order ID</Text><Text style={[s.value, { fontSize: 12, color: C.textMuted }]}>{order.id?.slice(0, 8)}...</Text></View>
         </View>
 
         {/* Review form */}

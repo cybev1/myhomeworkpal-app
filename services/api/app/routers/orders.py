@@ -33,15 +33,21 @@ async def create_order(req: CreateOrderRequest, user: User = Depends(get_current
         delivery_deadline=datetime.utcnow() + timedelta(days=7),
     )
     db.add(order)
+    await db.flush()        # Flush order first to generate order.id
+    await db.refresh(order)  # Now order.id is populated
 
-    # Create escrow payment
+    # Create escrow payment with the real order.id
     payment = Payment(
         amount=req.amount, status="held",
         order_id=order.id, payer_id=user.id, payee_id=req.helper_id,
     )
     db.add(payment)
     await db.flush()
-    await db.refresh(order)
+
+    # Update student escrow balance
+    user.escrow_balance = (user.escrow_balance or 0) + req.amount
+    await db.flush()
+
     return {"id": order.id, "status": order.status, "amount": order.amount}
 
 @router.get("")
@@ -51,10 +57,35 @@ async def list_orders(user: User = Depends(get_current_user), db: AsyncSession =
         .order_by(desc(Order.created_at))
     )
     orders = result.scalars().all()
-    return [{"id": o.id, "status": o.status, "amount": o.amount,
-             "taskId": o.task_id, "studentId": o.student_id, "helperId": o.helper_id,
-             "deliveryDeadline": o.delivery_deadline.isoformat() if o.delivery_deadline else None,
-             "createdAt": o.created_at.isoformat()} for o in orders]
+    order_list = []
+    for o in orders:
+        # Get task title
+        title = f"Order #{o.id[:8]}"
+        if o.task_id:
+            tr = await db.execute(select(Task).where(Task.id == o.task_id))
+            task = tr.scalar_one_or_none()
+            if task:
+                title = task.title
+        # Get helper/student name
+        helper_name = None
+        student_name = None
+        if o.helper_id:
+            hr = await db.execute(select(User).where(User.id == o.helper_id))
+            h = hr.scalar_one_or_none()
+            if h: helper_name = h.name
+        if o.student_id:
+            sr = await db.execute(select(User).where(User.id == o.student_id))
+            s = sr.scalar_one_or_none()
+            if s: student_name = s.name
+        order_list.append({
+            "id": o.id, "status": o.status, "amount": o.amount, "title": title,
+            "taskId": o.task_id, "studentId": o.student_id, "helperId": o.helper_id,
+            "helperName": helper_name, "studentName": student_name,
+            "deliveryDeadline": o.delivery_deadline.isoformat() if o.delivery_deadline else None,
+            "deliveredAt": o.delivered_at.isoformat() if o.delivered_at else None,
+            "createdAt": o.created_at.isoformat(),
+        })
+    return {"orders": order_list}
 
 @router.get("/{order_id}")
 async def get_order(order_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -64,9 +95,29 @@ async def get_order(order_id: str, user: User = Depends(get_current_user), db: A
         raise HTTPException(status_code=404, detail="Order not found")
     if order.student_id != user.id and order.helper_id != user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    return {"id": order.id, "status": order.status, "amount": order.amount,
+    # Get task title
+    title = f"Order #{order.id[:8]}"
+    if order.task_id:
+        tr = await db.execute(select(Task).where(Task.id == order.task_id))
+        task = tr.scalar_one_or_none()
+        if task: title = task.title
+    # Get names
+    helper_name = student_name = None
+    if order.helper_id:
+        hr = await db.execute(select(User).where(User.id == order.helper_id))
+        h = hr.scalar_one_or_none()
+        if h: helper_name = h.name
+    if order.student_id:
+        sr = await db.execute(select(User).where(User.id == order.student_id))
+        s = sr.scalar_one_or_none()
+        if s: student_name = s.name
+    return {"id": order.id, "status": order.status, "amount": order.amount, "title": title,
             "taskId": order.task_id, "studentId": order.student_id, "helperId": order.helper_id,
+            "helperName": helper_name, "studentName": student_name,
+            "deliveryDeadline": order.delivery_deadline.isoformat() if order.delivery_deadline else None,
             "deliveredAt": order.delivered_at.isoformat() if order.delivered_at else None,
+            "completedAt": order.completed_at.isoformat() if order.completed_at else None,
+            "revisionMessage": order.revision_message,
             "createdAt": order.created_at.isoformat()}
 
 @router.post("/{order_id}/deliver")
