@@ -52,8 +52,8 @@ export default function PaymentScreen() {
               <Text style={s.balAmount}>${balance.toFixed(2)}</Text>
               <View style={s.cardFooter}>
                 <View><Text style={s.cardFieldLbl}>Escrow</Text><Text style={s.cardFieldVal}>${escrow.toFixed(2)}</Text></View>
-                <View><Text style={s.cardFieldLbl}>Pending</Text><Text style={s.cardFieldVal}>$0.00</Text></View>
-                <View><Text style={s.cardFieldLbl}>Currency</Text><Text style={s.cardFieldVal}>USD</Text></View>
+                <View><Text style={s.cardFieldLbl}>Withdrawable</Text><Text style={s.cardFieldVal}>${(wallet?.availableForWithdrawal ?? balance).toFixed(2)}</Text></View>
+                <View><Text style={s.cardFieldLbl}>Clearing</Text><Text style={s.cardFieldVal}>${(wallet?.pendingClearance ?? 0).toFixed(2)}</Text></View>
               </View>
             </LinearGradient>
           </View>
