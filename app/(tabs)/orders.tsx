@@ -64,7 +64,7 @@ export default function OrdersScreen() {
         </View>
       ) : (
         orders.map((o: any) => (
-          <TouchableOpacity key={o.id || o._id} style={s.card} onPress={() => router.push(`/task/${o.id || o._id}`)}>
+          <TouchableOpacity key={o.id || o._id} style={s.card} onPress={() => router.push(`/order/${o.id || o._id}`)}>
             <View style={s.cardTop}>
               <View style={[s.statusBadge, { backgroundColor: `${statusColor(o.status)}12` }]}>
                 <View style={[s.statusDot, { backgroundColor: statusColor(o.status) }]} />

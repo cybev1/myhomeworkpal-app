@@ -51,10 +51,11 @@ export default function AccountScreen() {
       { icon: 'star-outline', label: 'My Reviews', onPress: () => {} },
     ]},
     { section: 'Support', items: [
+      ...(user?.role === 'admin' || user?.role === 'superadmin' ? [{ icon: 'settings-outline', label: 'Admin Panel', onPress: () => router.push('/admin') }] : []),
       { icon: 'help-circle-outline', label: 'Help Center', onPress: () => {} },
       { icon: 'chatbubble-outline', label: 'Contact Support', onPress: () => {} },
       { icon: 'shield-checkmark-outline', label: 'Trust & Safety', onPress: () => {} },
-      { icon: 'document-outline', label: 'Terms & Privacy', onPress: () => {} },
+      { icon: 'document-outline', label: 'Terms & Privacy', onPress: () => router.push('/privacy') },
     ]},
   ];
 
