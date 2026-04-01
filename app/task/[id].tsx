@@ -75,7 +75,22 @@ export default function TaskDetailScreen() {
         });
         showAlert('Order Started!', 'Your task is now in progress.', () => router.push('/(tabs)/orders'));
       } catch (err: any) {
-        showAlert('Error', err.response?.data?.detail || 'Failed to accept bid');
+        const errMsg = err.response?.data?.detail || 'Failed to accept bid';
+          if (errMsg.includes('Insufficient funds')) {
+            if (isWeb) {
+              if (window.confirm(errMsg + '\n\nWould you like to add funds to your wallet?')) {
+                router.push('/add-funds');
+              }
+            } else {
+              const { Alert: RNAlert } = require('react-native');
+              RNAlert.alert('Insufficient Funds', errMsg, [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Add Funds', onPress: () => router.push('/add-funds') },
+              ]);
+            }
+          } else {
+            showAlert('Error', errMsg);
+          }
       }
     };
     if (isWeb) {

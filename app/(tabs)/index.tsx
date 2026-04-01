@@ -73,9 +73,9 @@ export default function DashboardScreen() {
         )}
       </View>
 
-      {/* Wallet card (helpers) */}
-      {isHelper && wallet && (
-        <TouchableOpacity onPress={() => router.push('/payment')} style={s.walletCard}>
+      {/* Wallet card */}
+      {wallet && (
+        <TouchableOpacity onPress={() => router.push(isHelper ? '/payment' : '/add-funds')} style={s.walletCard}>
           <View style={s.walletLeft}>
             <Ionicons name="wallet" size={24} color={C.primary} />
             <View style={{ marginLeft: 12 }}>
@@ -83,7 +83,10 @@ export default function DashboardScreen() {
               <Text style={s.walletAmount}>${(wallet.balance || 0).toFixed(2)}</Text>
             </View>
           </View>
-          <View style={s.walletBtn}><Text style={s.walletBtnText}>Withdraw</Text><Ionicons name="arrow-forward" size={16} color={C.primary} /></View>
+          <View style={s.walletBtn}>
+            <Text style={s.walletBtnText}>{isHelper ? 'Withdraw' : 'Add Funds'}</Text>
+            <Ionicons name="arrow-forward" size={16} color={C.primary} />
+          </View>
         </TouchableOpacity>
       )}
 

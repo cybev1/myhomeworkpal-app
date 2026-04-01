@@ -61,6 +61,7 @@ export default function RootLayout() {
         <Stack.Screen name="create-service" options={{ presentation: 'modal' }} />
         <Stack.Screen name="profile/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="payment" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="add-funds" options={{ presentation: 'modal' }} />
         <Stack.Screen name="order/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ presentation: 'modal' }} />

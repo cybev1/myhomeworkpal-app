@@ -59,7 +59,7 @@ export default function PaymentScreen() {
           </View>
 
           <View style={s.actionsRow}>
-            <ActionBtn icon="add-circle" label="Add Funds" color={C.accent} />
+            <ActionBtn icon="add-circle" label="Add Funds" color={C.accent} onPress={() => router.push('/add-funds')} />
             <ActionBtn icon="arrow-up-circle" label="Withdraw" color="#06B6D4" />
             <ActionBtn icon="swap-horizontal" label="Transfer" color="#F59E0B" />
             <ActionBtn icon="receipt" label="Invoices" color={C.primary} />
@@ -94,8 +94,8 @@ export default function PaymentScreen() {
   );
 }
 
-const ActionBtn = ({ icon, label, color }: any) => (
-  <TouchableOpacity style={s.actionBtn}>
+const ActionBtn = ({ icon, label, color, onPress }: any) => (
+  <TouchableOpacity style={s.actionBtn} onPress={onPress}>
     <View style={[s.actionIcon, { backgroundColor: `${color}10` }]}><Ionicons name={icon} size={22} color={color} /></View>
     <Text style={s.actionLabel}>{label}</Text>
   </TouchableOpacity>
