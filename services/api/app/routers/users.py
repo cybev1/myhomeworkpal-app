@@ -28,7 +28,7 @@ async def top_helpers(limit: int = 10, db: AsyncSession = Depends(get_db)):
     helpers = result.scalars().all()
     return [{"id": h.id, "name": h.name, "avatar": h.avatar, "rating": h.rating,
              "totalReviews": h.total_reviews, "completedOrders": h.completed_orders,
-             "bio": h.bio, "verified": h.verified} for h in helpers]
+             "bio": h.bio, "skills": h.skills, "verified": h.verified} for h in helpers]
 
 @router.get("/{user_id}")
 async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):

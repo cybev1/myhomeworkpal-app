@@ -45,7 +45,7 @@ export default function AccountScreen() {
 
   const menus = [
     { section: 'Account', items: [
-      { icon: 'person-outline', label: 'Edit Profile', onPress: () => {} },
+      { icon: 'person-outline', label: 'Edit Profile', onPress: () => router.push('/profile/edit') },
       { icon: 'wallet-outline', label: 'Wallet & Earnings', onPress: () => router.push('/payment') },
       { icon: 'card-outline', label: 'Payment Methods', onPress: () => {} },
       { icon: 'star-outline', label: 'My Reviews', onPress: () => {} },
