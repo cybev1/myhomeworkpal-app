@@ -137,6 +137,84 @@ async def verify_user(user_id: str, user: User = Depends(require_admin), db: Asy
     await db.flush()
     return {"message": f"{target.name} verified"}
 
+
+# ═══ Wallet Management (Admin) ═══
+class WalletAdjustRequest(BaseModel):
+    amount: float
+    reason: str = ""
+
+@router.post("/users/{user_id}/add-funds")
+async def admin_add_funds(user_id: str, req: WalletAdjustRequest, user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target.balance = (target.balance or 0) + req.amount
+    await db.flush()
+    return {"message": f"Added ${req.amount:.2f} to {target.name}'s wallet", "newBalance": target.balance}
+
+@router.post("/users/{user_id}/deduct-funds")
+async def admin_deduct_funds(user_id: str, req: WalletAdjustRequest, user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target.balance = max(0, (target.balance or 0) - req.amount)
+    await db.flush()
+    return {"message": f"Deducted ${req.amount:.2f} from {target.name}'s wallet", "newBalance": target.balance}
+
+@router.post("/users/{user_id}/set-escrow")
+async def admin_set_escrow(user_id: str, req: WalletAdjustRequest, user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target.escrow_balance = req.amount
+    await db.flush()
+    return {"message": f"Set {target.name}'s escrow to ${req.amount:.2f}", "escrowBalance": target.escrow_balance}
+
+# ═══ Order Management (Admin) ═══
+@router.get("/orders")
+async def admin_list_orders(status: Optional[str] = None, page: int = 1, limit: int = 20, user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    from app.models.database import Order
+    query = select(Order)
+    if status:
+        query = query.where(Order.status == status)
+    query = query.order_by(desc(Order.created_at)).offset((page - 1) * limit).limit(limit)
+    result = await db.execute(query)
+    orders = result.scalars().all()
+    return {"orders": [{
+        "id": o.id, "status": o.status, "amount": o.amount,
+        "taskId": o.task_id, "studentId": o.student_id, "helperId": o.helper_id,
+        "createdAt": o.created_at.isoformat() if o.created_at else None,
+    } for o in orders]}
+
+@router.post("/orders/{order_id}/refund")
+async def admin_refund_order(order_id: str, user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    from app.models.database import Order
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Refund to student
+    student = await db.execute(select(User).where(User.id == order.student_id))
+    student = student.scalar_one_or_none()
+    if student:
+        student.balance = (student.balance or 0) + order.amount
+        student.escrow_balance = max(0, (student.escrow_balance or 0) - order.amount)
+    
+    order.status = "cancelled"
+    
+    # Update payment
+    pay = await db.execute(select(Payment).where(Payment.order_id == order_id))
+    payment = pay.scalar_one_or_none()
+    if payment:
+        payment.status = "refunded"
+    
+    await db.flush()
+    return {"message": f"Order refunded. ${order.amount:.2f} returned to student."}
+
 # ═══ Task Management ═══
 @router.get("/tasks")
 async def admin_list_tasks(

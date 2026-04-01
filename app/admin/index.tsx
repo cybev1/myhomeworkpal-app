@@ -50,6 +50,20 @@ export default function AdminPanel() {
     catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
   };
 
+  const addFunds = async (userId: string, name: string) => {
+    const amount = isWeb ? window.prompt(\`Add funds to \${name}'s wallet. Enter amount ($):\`, '100') : '100';
+    if (!amount) return;
+    try { await api.post(\`/admin/users/\${userId}/add-funds\`, { amount: parseFloat(amount), reason: 'Admin credit' }); alert('Done', \`$\${amount} added to \${name}'s wallet\`); fetchData(); }
+    catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
+  };
+
+  const deductFunds = async (userId: string, name: string) => {
+    const amount = isWeb ? window.prompt(\`Deduct from \${name}'s wallet. Enter amount ($):\`, '50') : '50';
+    if (!amount) return;
+    try { await api.post(\`/admin/users/\${userId}/deduct-funds\`, { amount: parseFloat(amount), reason: 'Admin deduction' }); alert('Done', \`$\${amount} deducted from \${name}'s wallet\`); fetchData(); }
+    catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
+  };
+
   const deleteUser = async (userId: string, name: string) => {
     if (!doConfirm(`Delete user "${name}"? This cannot be undone.`)) return;
     try { await api.delete(`/admin/users/${userId}`); alert('Deleted', `${name} removed`); fetchData(); }
@@ -138,8 +152,11 @@ export default function AdminPanel() {
                       </View>
                       <Text style={s.userEmail}>{u.email}</Text>
                     </View>
-                    <View style={[s.roleBadge, { backgroundColor: u.role === 'superadmin' ? '#FEF3C7' : u.role === 'admin' ? C.primarySoft : u.role === 'helper' ? C.accentSoft : C.bgSoft }]}>
-                      <Text style={[s.roleText, { color: u.role === 'superadmin' ? '#92400E' : u.role === 'admin' ? C.primary : u.role === 'helper' ? '#059669' : C.textMuted }]}>{u.role}</Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <View style={[s.roleBadge, { backgroundColor: u.role === 'superadmin' ? '#FEF3C7' : u.role === 'admin' ? C.primarySoft : u.role === 'helper' ? C.accentSoft : C.bgSoft }]}>
+                        <Text style={[s.roleText, { color: u.role === 'superadmin' ? '#92400E' : u.role === 'admin' ? C.primary : u.role === 'helper' ? '#059669' : C.textMuted }]}>{u.role}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.accent, marginTop: 4 }}>${(u.balance || 0).toFixed(2)}</Text>
                     </View>
                   </View>
                   <View style={s.userActions}>
@@ -147,6 +164,8 @@ export default function AdminPanel() {
                     {u.role === 'student' && <TouchableOpacity onPress={() => promoteUser(u.id, 'helper')} style={s.actionChip}><Ionicons name="arrow-up" size={14} color={C.cyan} /><Text style={[s.actionText, { color: C.cyan }]}>→ Helper</Text></TouchableOpacity>}
                     {u.role !== 'admin' && u.role !== 'superadmin' && <TouchableOpacity onPress={() => promoteUser(u.id, 'admin')} style={s.actionChip}><Ionicons name="shield" size={14} color={C.primary} /><Text style={[s.actionText, { color: C.primary }]}>→ Admin</Text></TouchableOpacity>}
                     <TouchableOpacity onPress={() => deleteUser(u.id, u.name)} style={s.actionChip}><Ionicons name="trash" size={14} color={C.error} /><Text style={[s.actionText, { color: C.error }]}>Delete</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={() => addFunds(u.id, u.name)} style={s.actionChip}><Ionicons name="add-circle" size={14} color={C.accent} /><Text style={[s.actionText, { color: C.accent }]}>+ Funds</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={() => deductFunds(u.id, u.name)} style={s.actionChip}><Ionicons name="remove-circle" size={14} color={C.gold} /><Text style={[s.actionText, { color: C.gold }]}>- Funds</Text></TouchableOpacity>
                   </View>
                 </View>
               ))}

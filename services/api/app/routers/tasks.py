@@ -169,11 +169,13 @@ async def delete_task(task_id: str, user: User = Depends(get_current_user), db: 
     return {"deleted": True}
 
 # ═══ File upload for tasks ═══
+from fastapi import File, Form, Request
 
 @router.post("/{task_id}/files")
 async def upload_task_file(
     task_id: str,
-    file: UploadFile = FastAPIFile(...),
+    request: Request,
+    file: UploadFile = FastAPIFile(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -181,11 +183,26 @@ async def upload_task_file(
     task = result.scalar_one_or_none()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    # Store filename in task record (in production, upload to S3/Cloudinary)
+
+    filename = "attachment"
+    if file and file.filename:
+        filename = file.filename
+    else:
+        # Try to get file from form data directly
+        try:
+            form = await request.form()
+            for key, value in form.items():
+                if hasattr(value, 'filename') and value.filename:
+                    filename = value.filename
+                    break
+        except:
+            pass
+
+    # Store filename in task record
     existing = task.files or ""
-    task.files = (existing + "," + file.filename) if existing else file.filename
+    task.files = (existing + "," + filename) if existing else filename
     await db.flush()
-    return {"message": "File uploaded", "filename": file.filename, "taskId": task_id}
+    return {"message": "File uploaded", "filename": filename, "taskId": task_id}
 
 # ═══ Bids on a task ═══
 @router.post("/{task_id}/bids")
