@@ -111,7 +111,7 @@ async def _complete_order(order, db, auto=False):
 
     # System message
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
-    prefix = f"Auto-approved after {cfg[\"auto_approve\"]} days. " if auto else ""
+    prefix = f"Auto-approved after {cfg['auto_approve']} days. " if auto else ""
     await sys_msg(conv_id, f"✅ {prefix}Order completed! Helper receives ${helper_payout:.2f} (${fee:.2f} platform fee). Thank you!", db)
 
     await db.flush()
@@ -200,7 +200,7 @@ async def create_order(req: CreateOrderRequest, user: User = Depends(get_current
 
     fee = round(req.amount * cfg["fee"] / 100, 2)
     payout = round(req.amount - fee, 2)
-    await sys_msg(conv_id, f"🎉 Order started for \"{task_title or 'task'}\" — ${req.amount:.2f} held in escrow.\n\n💰 Helper receives ${payout:.2f} ({100-cfg['fee']:.0f}% after {cfg['fee']:.0f}% fee).\n📋 {cfg['max_revisions']} free revisions.\n⏰ Auto-approval {cfg['auto_approve']} days after delivery.\n\nDiscuss details and share files here!", db)
+    await sys_msg(conv_id, f"🎉 Order started for '{task_title or 'task'}' — ${req.amount:.2f} held in escrow.\n\n💰 Helper receives ${payout:.2f} ({100-cfg['fee']:.0f}% after {cfg['fee']:.0f}% fee).\n📋 {cfg['max_revisions']} free revisions.\n⏰ Auto-approval {cfg['auto_approve']} days after delivery.\n\nDiscuss details and share files here!", db)
 
     await db.flush()
     return {"id": order.id, "status": order.status, "amount": order.amount, "conversationId": conv_id}
@@ -278,7 +278,7 @@ async def request_revision(order_id: str, req: RevisionRequest, user: User = Dep
 
     order.status = "revision"
     order.revision_message = req.message
-    await sys_msg(conv_id, f"🔄 Revision requested ({used + 1}/{MAX_REVISIONS}): \"{req.message}\"", db)
+    await sys_msg(conv_id, f"🔄 Revision requested ({used + 1}/{cfg['max_revisions']}): '{req.message}'", db)
     await db.flush()
     return {"id": order.id, "status": "revision", "revisionsUsed": used + 1, "maxRevisions": cfg["max_revisions"]}
 
@@ -290,7 +290,7 @@ async def dispute_order(order_id: str, req: DisputeRequest, user: User = Depends
     order.status = "disputed"
 
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
-    await sys_msg(conv_id, f"⚠️ Dispute opened: \"{req.reason}\"\n\nA moderator will review this case within 24-48 hours. Escrow funds are frozen until resolution.", db)
+    await sys_msg(conv_id, f"⚠️ Dispute opened: '{req.reason}'\n\nA moderator will review this case within 24-48 hours. Escrow funds are frozen until resolution.", db)
     await db.flush()
     return {"id": order.id, "status": "disputed"}
 
@@ -313,7 +313,7 @@ async def create_review(order_id: str, req: ReviewRequest, user: User = Depends(
         helper.total_reviews = total + 1
 
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
-    await sys_msg(conv_id, f"{'⭐' * req.rating} Review: \"{req.comment}\"", db)
+    await sys_msg(conv_id, f"{'⭐' * req.rating} Review: '{req.comment}'", db)
     await db.flush()
     return {"message": "Review submitted", "rating": req.rating}
 
