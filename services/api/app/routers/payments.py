@@ -12,10 +12,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from pydantic import BaseModel
 from typing import Optional
-from app.models.database import get_db, User, Payment, Order
+from app.models.database import get_db, User, Payment, Order, PlatformSettings
 from app.services.auth_service import get_current_user
 
 router = APIRouter()
+
+async def get_cfg(db):
+    r = await db.execute(select(PlatformSettings).where(PlatformSettings.id == "settings"))
+    s = r.scalar_one_or_none()
+    return {"fee": s.platform_fee_percent if s else 20, "clearance": s.clearance_days if s else 14,
+            "min_deposit": s.min_deposit if s else 5, "max_deposit": s.max_deposit if s else 10000,
+            "min_withdrawal": s.min_withdrawal if s else 10}
 
 STRIPE_SECRET = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
@@ -26,9 +33,9 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://myhomeworkpal.com")
 # ═══ Wallet balance ═══
 @router.get("/wallet")
 async def get_wallet(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    import os
-    CLEARANCE_DAYS = int(os.getenv("CLEARANCE_DAYS", "14"))
-    PLATFORM_FEE = float(os.getenv("PLATFORM_FEE_PERCENT", "20"))
+    cfg = await get_cfg(db)
+    CLEARANCE_DAYS = cfg["clearance"]
+    PLATFORM_FEE = cfg["fee"]
 
     # Calculate pending clearance for helpers
     pending_clearance = 0
@@ -63,10 +70,11 @@ class FundWalletRequest(BaseModel):
 
 @router.post("/fund-wallet")
 async def fund_wallet(req: FundWalletRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    if req.amount < 5:
-        raise HTTPException(status_code=400, detail="Minimum deposit is $5")
-    if req.amount > 10000:
-        raise HTTPException(status_code=400, detail="Maximum deposit is $10,000")
+    cfg = await get_cfg(db)
+    if req.amount < cfg["min_deposit"]:
+        raise HTTPException(status_code=400, detail=f"Minimum deposit is ${cfg['min_deposit']:.0f}")
+    if req.amount > cfg["max_deposit"]:
+        raise HTTPException(status_code=400, detail=f"Maximum deposit is ${cfg['max_deposit']:,.0f}")
 
     if req.method == "stripe" and STRIPE_SECRET:
         return await _create_stripe_session(req, user, db)
@@ -257,11 +265,11 @@ class WithdrawRequest(BaseModel):
 
 @router.post("/withdraw")
 async def withdraw(req: WithdrawRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    import os
-    CLEARANCE_DAYS = int(os.getenv("CLEARANCE_DAYS", "14"))
+    cfg = await get_cfg(db)
+    CLEARANCE_DAYS = cfg["clearance"]
 
-    if req.amount < 10:
-        raise HTTPException(status_code=400, detail="Minimum withdrawal is $10")
+    if req.amount < cfg["min_withdrawal"]:
+        raise HTTPException(status_code=400, detail=f"Minimum withdrawal is ${cfg['min_withdrawal']:.0f}")
     if (user.balance or 0) < req.amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
 

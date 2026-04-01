@@ -17,7 +17,9 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'overview' | 'users' | 'tasks'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'tasks' | 'settings'>('overview');
+  const [settings, setSettings] = useState<any>(null);
+  const [editingSettings, setEditingSettings] = useState<any>({});
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
 
@@ -32,12 +34,28 @@ export default function AdminPanel() {
         api.get('/admin/tasks', { params: { limit: 50 } }),
       ]);
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+      try { const sr = await api.get('/admin/settings'); setSettings(sr.data); setEditingSettings(sr.data); } catch {}
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data.users || []);
       if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data.tasks || []);
     } catch {} finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [search, roleFilter]);
+
+  const saveSettings = async () => {
+    try {
+      await api.patch('/admin/settings', {
+        platform_fee_percent: parseFloat(editingSettings.platformFeePercent),
+        auto_approve_days: parseInt(editingSettings.autoApproveDays),
+        clearance_days: parseInt(editingSettings.clearanceDays),
+        max_revisions: parseInt(editingSettings.maxRevisions),
+        min_deposit: parseFloat(editingSettings.minDeposit || 5),
+        min_withdrawal: parseFloat(editingSettings.minWithdrawal || 10),
+      });
+      alert('Saved!', 'Platform settings updated.');
+      fetchData();
+    } catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed to save'); }
+  };
 
   const promoteUser = async (userId: string, role: string) => {
     if (!doConfirm(`Promote user to ${role}?`)) return;
@@ -97,9 +115,9 @@ export default function AdminPanel() {
 
       {/* Tabs */}
       <View style={s.tabs}>
-        {(['overview', 'users', 'tasks'] as const).map(t => (
+        {(['overview', 'users', 'tasks', 'settings'] as const).map(t => (
           <TouchableOpacity key={t} onPress={() => setTab(t)} style={[s.tab, tab === t && s.tabActive]}>
-            <Ionicons name={t === 'overview' ? 'stats-chart' : t === 'users' ? 'people' : 'briefcase'} size={16} color={tab === t ? C.primary : C.textMuted} />
+            <Ionicons name={t === 'overview' ? 'stats-chart' : t === 'users' ? 'people' : t === 'tasks' ? 'briefcase' : 'settings'} size={16} color={tab === t ? C.primary : C.textMuted} />
             <Text style={[s.tabText, tab === t && s.tabTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
           </TouchableOpacity>
         ))}
@@ -190,6 +208,82 @@ export default function AdminPanel() {
               ))}
             </>
           )}
+          {/* Settings tab */}
+          {tab === 'settings' && settings && (
+            <>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 16 }}>Platform Configuration</Text>
+
+              <View style={s.settingCard}>
+                <View style={s.settingRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.settingLabel}>Platform Commission (%)</Text>
+                    <Text style={s.settingHint}>Fee deducted from each completed order</Text>
+                  </View>
+                  <TextInput
+                    value={String(editingSettings.platformFeePercent ?? '')}
+                    onChangeText={v => setEditingSettings({...editingSettings, platformFeePercent: v})}
+                    keyboardType="numeric" style={s.settingInput}
+                  />
+                </View>
+
+                <View style={s.settingDivider} />
+
+                <View style={s.settingRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.settingLabel}>Auto-Approve (days)</Text>
+                    <Text style={s.settingHint}>Days after delivery before auto-completion</Text>
+                  </View>
+                  <TextInput
+                    value={String(editingSettings.autoApproveDays ?? '')}
+                    onChangeText={v => setEditingSettings({...editingSettings, autoApproveDays: v})}
+                    keyboardType="numeric" style={s.settingInput}
+                  />
+                </View>
+
+                <View style={s.settingDivider} />
+
+                <View style={s.settingRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.settingLabel}>Clearance Period (days)</Text>
+                    <Text style={s.settingHint}>Days before helper can withdraw earned funds</Text>
+                  </View>
+                  <TextInput
+                    value={String(editingSettings.clearanceDays ?? '')}
+                    onChangeText={v => setEditingSettings({...editingSettings, clearanceDays: v})}
+                    keyboardType="numeric" style={s.settingInput}
+                  />
+                </View>
+
+                <View style={s.settingDivider} />
+
+                <View style={s.settingRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.settingLabel}>Free Revisions</Text>
+                    <Text style={s.settingHint}>Number of free revision requests per order</Text>
+                  </View>
+                  <TextInput
+                    value={String(editingSettings.maxRevisions ?? '')}
+                    onChangeText={v => setEditingSettings({...editingSettings, maxRevisions: v})}
+                    keyboardType="numeric" style={s.settingInput}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity onPress={saveSettings} style={s.saveBtn}>
+                <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                <Text style={s.saveBtnText}>Save Settings</Text>
+              </TouchableOpacity>
+
+              <View style={s.settingCard}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: C.textMuted, marginBottom: 8 }}>Current Values</Text>
+                <Text style={s.settingCurrent}>Commission: {settings.platformFeePercent}% per order</Text>
+                <Text style={s.settingCurrent}>Auto-approve: {settings.autoApproveDays} days after delivery</Text>
+                <Text style={s.settingCurrent}>Clearance: {settings.clearanceDays} days before withdrawal</Text>
+                <Text style={s.settingCurrent}>Revisions: {settings.maxRevisions} free per order</Text>
+              </View>
+            </>
+          )}
+
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
@@ -240,4 +334,13 @@ const s = StyleSheet.create({
   taskCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.border, marginBottom: 8 },
   taskTitle: { fontSize: 14, fontWeight: '600', color: C.text },
   taskMeta: { fontSize: 12, color: C.textMuted },
+  settingCard: { backgroundColor: '#fff', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: C.border, marginBottom: 12 },
+  settingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  settingLabel: { fontSize: 14, fontWeight: '600', color: C.text },
+  settingHint: { fontSize: 11, color: C.textMuted, marginTop: 2 },
+  settingInput: { width: 70, height: 42, backgroundColor: C.bgSoft, borderRadius: 10, borderWidth: 1, borderColor: C.border, textAlign: 'center', fontSize: 16, fontWeight: '700', color: C.primary },
+  settingDivider: { height: 1, backgroundColor: C.border, marginVertical: 4 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 12, height: 48, marginBottom: 16 },
+  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  settingCurrent: { fontSize: 13, color: C.textSoft, lineHeight: 22 },
 });

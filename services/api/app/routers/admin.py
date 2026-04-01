@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, or_
 from pydantic import BaseModel
 from typing import Optional
-from app.models.database import get_db, User, Task, Order, Bid, Payment, Review
+from app.models.database import get_db, User, Task, Order, Bid, Payment, Review, PlatformSettings
 from app.services.auth_service import get_current_user
 
 router = APIRouter()
@@ -214,6 +214,77 @@ async def admin_refund_order(order_id: str, user: User = Depends(require_admin),
     
     await db.flush()
     return {"message": f"Order refunded. ${order.amount:.2f} returned to student."}
+
+
+# ═══ Platform Settings (Superadmin) ═══
+class PlatformSettingsUpdate(BaseModel):
+    platform_fee_percent: Optional[float] = None
+    auto_approve_days: Optional[int] = None
+    clearance_days: Optional[int] = None
+    max_revisions: Optional[int] = None
+    min_deposit: Optional[float] = None
+    max_deposit: Optional[float] = None
+    min_withdrawal: Optional[float] = None
+    min_task_budget: Optional[float] = None
+
+@router.get("/settings")
+async def get_settings(user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(PlatformSettings).where(PlatformSettings.id == "settings"))
+    s = result.scalar_one_or_none()
+    if not s:
+        s = PlatformSettings(id="settings")
+        db.add(s)
+        await db.flush()
+        await db.refresh(s)
+    return {
+        "platformFeePercent": s.platform_fee_percent,
+        "autoApproveDays": s.auto_approve_days,
+        "clearanceDays": s.clearance_days,
+        "maxRevisions": s.max_revisions,
+        "minDeposit": s.min_deposit,
+        "maxDeposit": s.max_deposit,
+        "minWithdrawal": s.min_withdrawal,
+        "minTaskBudget": s.min_task_budget,
+    }
+
+@router.patch("/settings")
+async def update_settings(req: PlatformSettingsUpdate, user: User = Depends(require_superadmin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(PlatformSettings).where(PlatformSettings.id == "settings"))
+    s = result.scalar_one_or_none()
+    if not s:
+        s = PlatformSettings(id="settings")
+        db.add(s)
+        await db.flush()
+
+    updates = {}
+    if req.platform_fee_percent is not None:
+        if not (0 <= req.platform_fee_percent <= 50):
+            raise HTTPException(status_code=400, detail="Fee must be 0-50%")
+        s.platform_fee_percent = req.platform_fee_percent
+        updates["platformFeePercent"] = req.platform_fee_percent
+    if req.auto_approve_days is not None:
+        if not (1 <= req.auto_approve_days <= 30):
+            raise HTTPException(status_code=400, detail="Auto-approve must be 1-30 days")
+        s.auto_approve_days = req.auto_approve_days
+        updates["autoApproveDays"] = req.auto_approve_days
+    if req.clearance_days is not None:
+        if not (0 <= req.clearance_days <= 60):
+            raise HTTPException(status_code=400, detail="Clearance must be 0-60 days")
+        s.clearance_days = req.clearance_days
+        updates["clearanceDays"] = req.clearance_days
+    if req.max_revisions is not None:
+        if not (0 <= req.max_revisions <= 10):
+            raise HTTPException(status_code=400, detail="Max revisions must be 0-10")
+        s.max_revisions = req.max_revisions
+        updates["maxRevisions"] = req.max_revisions
+    if req.min_deposit is not None: s.min_deposit = req.min_deposit
+    if req.max_deposit is not None: s.max_deposit = req.max_deposit
+    if req.min_withdrawal is not None: s.min_withdrawal = req.min_withdrawal
+    if req.min_task_budget is not None: s.min_task_budget = req.min_task_budget
+
+    await db.flush()
+    return {"message": "Settings updated", "updates": updates}
+
 
 # ═══ Task Management ═══
 @router.get("/tasks")

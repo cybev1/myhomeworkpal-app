@@ -9,7 +9,6 @@
 #  - Revision limit: 2 free revisions per order
 #  - Dispute window: 7 days after delivery
 # ═══════════════════════════════════════════════════════════════
-import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, or_
@@ -21,11 +20,20 @@ from app.services.auth_service import get_current_user
 
 router = APIRouter()
 
-# ═══ Platform config ═══
-PLATFORM_FEE_PERCENT = float(os.getenv("PLATFORM_FEE_PERCENT", "20"))  # 20% default
-AUTO_APPROVE_DAYS = int(os.getenv("AUTO_APPROVE_DAYS", "3"))           # 3 days
-CLEARANCE_DAYS = int(os.getenv("CLEARANCE_DAYS", "14"))                # 14 days before withdrawal
-MAX_REVISIONS = int(os.getenv("MAX_REVISIONS", "2"))                   # 2 free revisions
+# ═══ Platform config — loaded from DB (admin-adjustable) ═══
+from app.models.database import PlatformSettings
+
+async def get_settings(db: AsyncSession):
+    result = await db.execute(select(PlatformSettings).where(PlatformSettings.id == "settings"))
+    s = result.scalar_one_or_none()
+    if s:
+        return {
+            "fee": s.platform_fee_percent or 20,
+            "auto_approve": s.auto_approve_days or 3,
+            "clearance": s.clearance_days or 14,
+            "max_revisions": s.max_revisions or 2,
+        }
+    return {"fee": 20, "auto_approve": 3, "clearance": 14, "max_revisions": 2}
 
 class CreateOrderRequest(BaseModel):
     task_id: Optional[str] = None
@@ -67,9 +75,10 @@ async def sys_msg(conv_id: str, content: str, db: AsyncSession):
     await db.flush()
 
 async def check_auto_approve(order, db):
-    """Auto-approve if delivered > AUTO_APPROVE_DAYS ago and student hasn't acted"""
+    """Auto-approve if delivered > auto_approve_days ago and student hasn't acted"""
+    cfg = await get_settings(db)
     if order.status == "delivered" and order.delivered_at:
-        deadline = order.delivered_at + timedelta(days=AUTO_APPROVE_DAYS)
+        deadline = order.delivered_at + timedelta(days=cfg["auto_approve"])
         if datetime.utcnow() > deadline:
             await _complete_order(order, db, auto=True)
             return True
@@ -77,11 +86,12 @@ async def check_auto_approve(order, db):
 
 async def _complete_order(order, db, auto=False):
     """Release escrow with platform fee deduction"""
+    cfg = await get_settings(db)
     order.status = "completed"
     order.completed_at = datetime.utcnow()
 
     # Calculate platform fee
-    fee = round(order.amount * PLATFORM_FEE_PERCENT / 100, 2)
+    fee = round(order.amount * cfg["fee"] / 100, 2)
     helper_payout = round(order.amount - fee, 2)
 
     # Update payment record
@@ -101,7 +111,7 @@ async def _complete_order(order, db, auto=False):
 
     # System message
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
-    prefix = "Auto-approved after 3 days. " if auto else ""
+    prefix = f"Auto-approved after {cfg[\"auto_approve\"]} days. " if auto else ""
     await sys_msg(conv_id, f"✅ {prefix}Order completed! Helper receives ${helper_payout:.2f} (${fee:.2f} platform fee). Thank you!", db)
 
     await db.flush()
@@ -130,6 +140,7 @@ async def enrich_order(o, db):
         if conv: conv_id = conv.id
 
     # Count revisions used
+    cfg = await get_settings(db)
     revision_count = 0
     if conv_id:
         rev_msgs = await db.execute(
@@ -137,7 +148,7 @@ async def enrich_order(o, db):
         )
         revision_count = len(rev_msgs.scalars().all())
 
-    fee = round(o.amount * PLATFORM_FEE_PERCENT / 100, 2)
+    fee = round(o.amount * cfg["fee"] / 100, 2)
 
     return {
         "id": o.id, "status": o.status, "amount": o.amount, "title": title,
@@ -145,11 +156,11 @@ async def enrich_order(o, db):
         "helperName": helper_name, "studentName": student_name,
         "conversationId": conv_id,
         "platformFee": fee, "helperPayout": round(o.amount - fee, 2),
-        "feePercent": PLATFORM_FEE_PERCENT,
-        "revisionsUsed": revision_count, "maxRevisions": MAX_REVISIONS,
-        "autoApproveDays": AUTO_APPROVE_DAYS,
-        "autoApproveAt": (o.delivered_at + timedelta(days=AUTO_APPROVE_DAYS)).isoformat() if o.delivered_at and o.status == "delivered" else None,
-        "clearanceDate": (o.completed_at + timedelta(days=CLEARANCE_DAYS)).isoformat() if o.completed_at else None,
+        "feePercent": cfg["fee"],
+        "revisionsUsed": revision_count, "maxRevisions": cfg["max_revisions"],
+        "autoApproveDays": cfg["auto_approve"],
+        "autoApproveAt": (o.delivered_at + timedelta(days=cfg["auto_approve"])).isoformat() if o.delivered_at and o.status == "delivered" else None,
+        "clearanceDate": (o.completed_at + timedelta(days=cfg["clearance"])).isoformat() if o.completed_at else None,
         "deliveryDeadline": o.delivery_deadline.isoformat() if o.delivery_deadline else None,
         "deliveredAt": o.delivered_at.isoformat() if o.delivered_at else None,
         "completedAt": o.completed_at.isoformat() if o.completed_at else None,
@@ -180,15 +191,16 @@ async def create_order(req: CreateOrderRequest, user: User = Depends(get_current
     payment = Payment(amount=req.amount, status="held", order_id=order.id, payer_id=user.id, payee_id=req.helper_id)
     db.add(payment)
 
+    cfg = await get_settings(db)
     conv_id = await get_or_create_conversation(user.id, req.helper_id, db)
     task_title = ""
     if req.task_id:
         t = (await db.execute(select(Task).where(Task.id == req.task_id))).scalar_one_or_none()
         if t: task_title = t.title
 
-    fee = round(req.amount * PLATFORM_FEE_PERCENT / 100, 2)
+    fee = round(req.amount * cfg["fee"] / 100, 2)
     payout = round(req.amount - fee, 2)
-    await sys_msg(conv_id, f"🎉 Order started for \"{task_title or 'task'}\" — ${req.amount:.2f} held in escrow.\n\n💰 Helper will receive ${payout:.2f} ({100-PLATFORM_FEE_PERCENT:.0f}% after {PLATFORM_FEE_PERCENT:.0f}% platform fee).\n📋 {MAX_REVISIONS} free revisions included.\n⏰ Auto-approval {AUTO_APPROVE_DAYS} days after delivery if not reviewed.\n\nDiscuss details and share files here!", db)
+    await sys_msg(conv_id, f"🎉 Order started for \"{task_title or 'task'}\" — ${req.amount:.2f} held in escrow.\n\n💰 Helper receives ${payout:.2f} ({100-cfg['fee']:.0f}% after {cfg['fee']:.0f}% fee).\n📋 {cfg['max_revisions']} free revisions.\n⏰ Auto-approval {cfg['auto_approve']} days after delivery.\n\nDiscuss details and share files here!", db)
 
     await db.flush()
     return {"id": order.id, "status": order.status, "amount": order.amount, "conversationId": conv_id}
@@ -227,9 +239,10 @@ async def deliver_order(order_id: str, user: User = Depends(get_current_user), d
     order.status = "delivered"
     order.delivered_at = datetime.utcnow()
 
+    cfg = await get_settings(db)
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
-    auto_date = (datetime.utcnow() + timedelta(days=AUTO_APPROVE_DAYS)).strftime("%b %d, %Y")
-    await sys_msg(conv_id, f"📦 Work delivered! Student has {AUTO_APPROVE_DAYS} days to review.\n\nIf not reviewed by {auto_date}, order auto-completes and payment releases.", db)
+    auto_date = (datetime.utcnow() + timedelta(days=cfg["auto_approve"])).strftime("%b %d, %Y")
+    await sys_msg(conv_id, f"📦 Work delivered! Student has {cfg['auto_approve']} days to review.\n\nIf not reviewed by {auto_date}, order auto-completes and payment releases.", db)
 
     await db.flush()
     return {"id": order.id, "status": "delivered"}
@@ -254,20 +267,20 @@ async def request_revision(order_id: str, req: RevisionRequest, user: User = Dep
     if order.status != "delivered":
         raise HTTPException(status_code=400, detail="Can only request revision on delivered orders")
 
-    # Check revision limit
+    cfg = await get_settings(db)
     conv_id = await get_or_create_conversation(order.student_id, order.helper_id, db)
     rev_msgs = await db.execute(
         select(Message).where(Message.conversation_id == conv_id, Message.content.like("%Revision requested%"))
     )
     used = len(rev_msgs.scalars().all())
-    if used >= MAX_REVISIONS:
-        raise HTTPException(status_code=400, detail=f"Revision limit reached ({MAX_REVISIONS} free revisions). Please approve or open a dispute.")
+    if used >= cfg["max_revisions"]:
+        raise HTTPException(status_code=400, detail=f"Revision limit reached ({cfg['max_revisions']} free revisions). Please approve or open a dispute.")
 
     order.status = "revision"
     order.revision_message = req.message
     await sys_msg(conv_id, f"🔄 Revision requested ({used + 1}/{MAX_REVISIONS}): \"{req.message}\"", db)
     await db.flush()
-    return {"id": order.id, "status": "revision", "revisionsUsed": used + 1, "maxRevisions": MAX_REVISIONS}
+    return {"id": order.id, "status": "revision", "revisionsUsed": used + 1, "maxRevisions": cfg["max_revisions"]}
 
 # ═══ Dispute ═══
 @router.post("/{order_id}/dispute")
@@ -310,8 +323,8 @@ async def get_platform_settings(user: User = Depends(get_current_user)):
     if user.role not in ("admin", "superadmin"):
         raise HTTPException(status_code=403)
     return {
-        "feePercent": PLATFORM_FEE_PERCENT,
-        "autoApproveDays": AUTO_APPROVE_DAYS,
+        "feePercent": cfg["fee"],
+        "autoApproveDays": cfg["auto_approve"],
         "clearanceDays": CLEARANCE_DAYS,
-        "maxRevisions": MAX_REVISIONS,
+        "maxRevisions": cfg["max_revisions"],
     }
