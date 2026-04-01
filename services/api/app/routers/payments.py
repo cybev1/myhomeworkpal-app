@@ -26,9 +26,32 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://myhomeworkpal.com")
 # ═══ Wallet balance ═══
 @router.get("/wallet")
 async def get_wallet(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    import os
+    CLEARANCE_DAYS = int(os.getenv("CLEARANCE_DAYS", "14"))
+    PLATFORM_FEE = float(os.getenv("PLATFORM_FEE_PERCENT", "20"))
+
+    # Calculate pending clearance for helpers
+    pending_clearance = 0
+    available_balance = user.balance or 0
+    if user.role == "helper":
+        from app.models.database import Order
+        recent = await db.execute(
+            select(Order).where(
+                Order.helper_id == user.id,
+                Order.status == "completed",
+                Order.completed_at > datetime.utcnow() - timedelta(days=CLEARANCE_DAYS),
+            )
+        )
+        pending_clearance = sum(o.amount * (100 - PLATFORM_FEE) / 100 for o in recent.scalars().all())
+        available_balance = max(0, (user.balance or 0) - pending_clearance)
+
     return {
         "balance": user.balance or 0,
+        "availableForWithdrawal": round(available_balance, 2),
+        "pendingClearance": round(pending_clearance, 2),
         "escrowBalance": user.escrow_balance or 0,
+        "clearanceDays": CLEARANCE_DAYS,
+        "platformFeePercent": PLATFORM_FEE,
         "currency": "USD",
     }
 
@@ -234,10 +257,32 @@ class WithdrawRequest(BaseModel):
 
 @router.post("/withdraw")
 async def withdraw(req: WithdrawRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    import os
+    CLEARANCE_DAYS = int(os.getenv("CLEARANCE_DAYS", "14"))
+
     if req.amount < 10:
         raise HTTPException(status_code=400, detail="Minimum withdrawal is $10")
     if (user.balance or 0) < req.amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
+
+    # Check clearance — funds from recently completed orders may not be withdrawable yet
+    from app.models.database import Order
+    recent_orders = await db.execute(
+        select(Order).where(
+            Order.helper_id == user.id,
+            Order.status == "completed",
+            Order.completed_at > datetime.utcnow() - timedelta(days=CLEARANCE_DAYS),
+        )
+    )
+    pending_clearance = sum(o.amount for o in recent_orders.scalars().all())
+    available = max(0, (user.balance or 0) - pending_clearance)
+
+    if available < req.amount:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only ${available:.2f} available for withdrawal. ${pending_clearance:.2f} is in {CLEARANCE_DAYS}-day clearance period."
+        )
+
     user.balance = (user.balance or 0) - req.amount
     await db.flush()
-    return {"message": f"Withdrawal of ${req.amount:.2f} initiated", "balance": user.balance}
+    return {"message": f"Withdrawal of ${req.amount:.2f} initiated", "balance": user.balance, "clearancePending": pending_clearance}
