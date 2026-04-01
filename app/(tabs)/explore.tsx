@@ -7,7 +7,7 @@ import { usersAPI } from '@/services/api';
 
 const isWeb = Platform.OS === 'web';
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', gold: '#F59E0B', cyan: '#06B6D4' };
-const cats = ['All', 'Math', 'CS', 'English', 'Science', 'Business', 'Engineering'];
+const cats = ['All', 'Math', 'CS', 'English', 'Science', 'Business', 'Engineering', 'Humanities', 'Other'];
 
 export default function ExploreScreen() {
   const router = useRouter();
