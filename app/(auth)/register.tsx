@@ -8,6 +8,10 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/context/stores';
 
 const isWeb = Platform.OS === 'web';
+const showAlert = (t: string, m: string) => {
+  if (isWeb) window.alert(t + '\n' + m);
+  else Alert.alert(t, m);
+};
 const C = {
   bg: '#FFFFFF', bgSoft: '#F7F8FC', bgMuted: '#F0F2F8',
   text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8',
@@ -39,7 +43,7 @@ export default function RegisterScreen() {
       await register({ name, email, password, role });
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.response?.data?.detail || 'Something went wrong');
+      showAlert('Registration Failed', err.response?.data?.detail || 'Something went wrong');
     } finally { setLoading(false); }
   };
 

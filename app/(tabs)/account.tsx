@@ -35,7 +35,11 @@ export default function AccountScreen() {
         });
     if (confirmed) {
       await logout();
-      router.replace('/');
+      if (Platform.OS === 'web') {
+        window.location.href = '/';  // Hard redirect on web (most reliable)
+      } else {
+        router.replace('/');
+      }
     }
   };
 

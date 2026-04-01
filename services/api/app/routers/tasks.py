@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File as FastAPIFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from pydantic import BaseModel
@@ -167,6 +167,25 @@ async def delete_task(task_id: str, user: User = Depends(get_current_user), db: 
         raise HTTPException(status_code=404, detail="Task not found")
     await db.delete(task)
     return {"deleted": True}
+
+# ═══ File upload for tasks ═══
+
+@router.post("/{task_id}/files")
+async def upload_task_file(
+    task_id: str,
+    file: UploadFile = FastAPIFile(...),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Task).where(Task.id == task_id))
+    task = result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    # Store filename in task record (in production, upload to S3/Cloudinary)
+    existing = task.files or ""
+    task.files = (existing + "," + file.filename) if existing else file.filename
+    await db.flush()
+    return {"message": "File uploaded", "filename": file.filename, "taskId": task_id}
 
 # ═══ Bids on a task ═══
 @router.post("/{task_id}/bids")

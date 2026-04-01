@@ -8,6 +8,10 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/context/stores';
 
 const isWeb = Platform.OS === 'web';
+const showAlert = (t: string, m: string) => {
+  if (isWeb) window.alert(t + '\n' + m);
+  else Alert.alert(t, m);
+};
 const C = {
   bg: '#FFFFFF', bgSoft: '#F7F8FC', bgMuted: '#F0F2F8',
   text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8',
@@ -35,7 +39,7 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Login Failed', err.response?.data?.detail || 'Invalid credentials');
+      showAlert('Login Failed', err.response?.data?.detail || 'Invalid credentials');
     } finally { setLoading(false); }
   };
 

