@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, Text, DateTime,
+    select, Column, String, Integer, Float, Boolean, Text, DateTime,
     ForeignKey,
 )
 from sqlalchemy.orm import declarative_base, relationship
@@ -237,6 +237,23 @@ class Follow(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # ═══════════════════════════════════════
+# PLATFORM SETTINGS (admin-adjustable)
+# ═══════════════════════════════════════
+class PlatformSettings(Base):
+    __tablename__ = "platform_settings"
+
+    id = Column(String, primary_key=True, default=lambda: "settings")  # singleton row
+    platform_fee_percent = Column(Float, default=20.0)
+    auto_approve_days = Column(Integer, default=3)
+    clearance_days = Column(Integer, default=14)
+    max_revisions = Column(Integer, default=2)
+    min_deposit = Column(Float, default=5.0)
+    max_deposit = Column(Float, default=10000.0)
+    min_withdrawal = Column(Float, default=10.0)
+    min_task_budget = Column(Float, default=5.0)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# ═══════════════════════════════════════
 # DB INIT
 # ═══════════════════════════════════════
 async def init_db():
@@ -260,6 +277,15 @@ async def init_db():
             )
         except Exception:
             pass
+    # Seed default platform settings
+    async with async_session() as session:
+        try:
+            result = await session.execute(select(PlatformSettings).where(PlatformSettings.id == "settings"))
+            if not result.scalar_one_or_none():
+                session.add(PlatformSettings(id="settings"))
+                await session.commit()
+        except Exception:
+            await session.rollback()
 
 async def get_db():
     async with async_session() as session:
