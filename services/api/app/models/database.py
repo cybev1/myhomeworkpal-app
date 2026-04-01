@@ -211,7 +211,7 @@ class Message(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     content = Column(Text, nullable=False)
     type = Column(String(20), default="text")
-    sender_id = Column(String, ForeignKey("users.id"), nullable=False)
+    sender_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # nullable for system messages
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
     read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -242,6 +242,24 @@ class Follow(Base):
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migration: make messages.sender_id nullable for system messages
+        try:
+            await conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE messages ALTER COLUMN sender_id DROP NOT NULL"
+                )
+            )
+        except Exception:
+            pass
+        # Drop FK constraint on sender_id so system messages (null sender) work
+        try:
+            await conn.execute(
+                __import__('sqlalchemy').text(
+                    "ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_sender_id_fkey"
+                )
+            )
+        except Exception:
+            pass
 
 async def get_db():
     async with async_session() as session:
