@@ -159,6 +159,10 @@ export const paymentsAPI = {
     api.post('/payments/create-intent', data),
   wallet: () => api.get('/payments/wallet'),
   transactions: (params?: any) => api.get('/payments/transactions', { params }),
+  fundWallet: (data: { amount: number; method: string; currency?: string }) =>
+    api.post('/payments/fund-wallet', data),
+  verifyPayment: (ref: string, method?: string) =>
+    api.post('/payments/verify', null, { params: { ref, method } }),
   withdraw: (data: { amount: number; method: string }) =>
     api.post('/payments/withdraw', data),
 };

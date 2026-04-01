@@ -51,16 +51,16 @@ export default function AdminPanel() {
   };
 
   const addFunds = async (userId: string, name: string) => {
-    const amount = isWeb ? window.prompt(\`Add funds to \${name}'s wallet. Enter amount ($):\`, '100') : '100';
+    const amount = isWeb ? window.prompt(`Add funds to ${name}'s wallet. Enter amount ($):`, '100') : '100';
     if (!amount) return;
-    try { await api.post(\`/admin/users/\${userId}/add-funds\`, { amount: parseFloat(amount), reason: 'Admin credit' }); alert('Done', \`$\${amount} added to \${name}'s wallet\`); fetchData(); }
+    try { await api.post(`/admin/users/${userId}/add-funds`, { amount: parseFloat(amount), reason: 'Admin credit' }); alert('Done', `$${amount} added to ${name}'s wallet`); fetchData(); }
     catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
   };
 
   const deductFunds = async (userId: string, name: string) => {
-    const amount = isWeb ? window.prompt(\`Deduct from \${name}'s wallet. Enter amount ($):\`, '50') : '50';
+    const amount = isWeb ? window.prompt(`Deduct from ${name}'s wallet. Enter amount ($):`, '50') : '50';
     if (!amount) return;
-    try { await api.post(\`/admin/users/\${userId}/deduct-funds\`, { amount: parseFloat(amount), reason: 'Admin deduction' }); alert('Done', \`$\${amount} deducted from \${name}'s wallet\`); fetchData(); }
+    try { await api.post(`/admin/users/${userId}/deduct-funds`, { amount: parseFloat(amount), reason: 'Admin deduction' }); alert('Done', `$${amount} deducted from ${name}'s wallet`); fetchData(); }
     catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
   };
 
