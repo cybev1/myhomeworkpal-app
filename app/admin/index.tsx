@@ -311,17 +311,44 @@ export default function AdminPanel() {
           {/* Schools Tab */}
           {tab === 'schools' && (
             <>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: C.text }}>Schools ({schoolsList.length})</Text>
-                <TouchableOpacity onPress={async () => { try { const r = await api.post('/schools/seed'); alert('Done', r.data.message); fetchData(); } catch (e: any) { alert('Error', e.response?.data?.detail || 'Already seeded'); } }} style={[s.actionChip, { backgroundColor: C.accentSoft, borderColor: '#D1FAE5' }]}>
-                  <Ionicons name="add-circle" size={14} color={C.accent} /><Text style={[s.actionText, { color: C.accent }]}>Seed Schools</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 8 }}>Schools ({schoolsList.length})</Text>
+
+              {/* Seed by country */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: C.textMuted, marginBottom: 8 }}>Seed schools by country (50 per batch, skips duplicates):</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[
+                    { code: 'US', flag: '🇺🇸', label: 'USA' },
+                    { code: 'UK', flag: '🇬🇧', label: 'UK' },
+                    { code: 'CA', flag: '🇨🇦', label: 'Canada' },
+                    { code: 'AU', flag: '🇦🇺', label: 'Australia' },
+                    { code: 'NG', flag: '🇳🇬', label: 'Nigeria' },
+                    { code: 'GH', flag: '🇬🇭', label: 'Ghana' },
+                    { code: 'ZA', flag: '🇿🇦', label: 'S. Africa' },
+                    { code: 'IN', flag: '🇮🇳', label: 'India' },
+                    { code: 'DE', flag: '🇩🇪', label: 'Germany' },
+                    { code: 'KE', flag: '🇰🇪', label: 'Kenya' },
+                  ].map(c => (
+                    <TouchableOpacity key={c.code} onPress={async () => {
+                      try { const r = await api.post('/schools/seed', null, { params: { country: c.code } }); alert('Done', r.data.message); fetchData(); }
+                      catch (e: any) { alert('Info', e.response?.data?.detail || 'Failed'); }
+                    }} style={[s.actionChip, { backgroundColor: C.primarySoft, borderColor: C.primary + '30' }]}>
+                      <Text style={{ fontSize: 16 }}>{c.flag}</Text>
+                      <Text style={[s.actionText, { color: C.primary }]}>{c.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+
+              {/* School list */}
               {schoolsList.map((sc: any) => (
                 <View key={sc.id} style={s.taskCard}>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.taskTitle}>{sc.name}</Text>
-                    <Text style={s.taskMeta}>{sc.shortName} · {sc.city}, {sc.state} {sc.telegramChannel ? '· ' + sc.telegramChannel : ''}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={s.taskTitle}>{sc.name}</Text>
+                      <Text style={{ fontSize: 10, color: C.textMuted, backgroundColor: C.bgSoft, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>{sc.country}</Text>
+                    </View>
+                    <Text style={s.taskMeta}>{sc.shortName} · {sc.city}, {sc.state} {sc.telegramChannel ? ' · ' + sc.telegramChannel : ''}</Text>
                   </View>
                   <TouchableOpacity onPress={async () => {
                     const channel = isWeb ? window.prompt('Telegram channel (e.g. @schoolchannel):') : '';
@@ -329,7 +356,11 @@ export default function AdminPanel() {
                       try { await api.patch('/schools/' + sc.id, { name: sc.name, telegram_channel: channel }); alert('Updated', 'Channel added'); fetchData(); }
                       catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
                     }
-                  }} style={{ padding: 8 }}><Ionicons name="paper-plane-outline" size={16} color={C.cyan} /></TouchableOpacity>
+                  }} style={{ padding: 4 }}><Ionicons name="paper-plane-outline" size={16} color={C.cyan} /></TouchableOpacity>
+                  <TouchableOpacity onPress={async () => {
+                    if (!doConfirm('Delete ' + sc.name + '?')) return;
+                    try { await api.delete('/schools/' + sc.id); fetchData(); } catch {}
+                  }} style={{ padding: 4 }}><Ionicons name="trash-outline" size={16} color={C.error} /></TouchableOpacity>
                 </View>
               ))}
             </>

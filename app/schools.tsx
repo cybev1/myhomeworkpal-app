@@ -13,22 +13,25 @@ export default function SchoolsDirectory() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [countries, setCountries] = useState<any[]>([]);
   const [states, setStates] = useState<string[]>([]);
 
   useEffect(() => {
     api.get('/schools/states').then(r => setStates(r.data.states || [])).catch(() => {});
+    api.get('/schools/countries').then(r => setCountries(r.data.countries || [])).catch(() => {});
     fetchSchools();
   }, []);
 
   const fetchSchools = async (q?: string, state?: string) => {
     setLoading(true);
     try {
-      const { data } = await api.get('/schools', { params: { q: q || search, state: state || stateFilter, limit: 50 } });
+      const { data } = await api.get('/schools', { params: { q: q || search, state: state || stateFilter, country: countryFilter || undefined, limit: 50 } });
       setSchools(data.schools || []);
     } catch {} finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchSchools(); }, [search, stateFilter]);
+  useEffect(() => { fetchSchools(); }, [search, stateFilter, countryFilter]);
 
   return (
     <View style={s.page}>
@@ -54,6 +57,22 @@ export default function SchoolsDirectory() {
           <TextInput value={search} onChangeText={setSearch} placeholder="Search schools..." placeholderTextColor={C.textMuted} style={s.searchInput} />
         </View>
       </View>
+
+      {/* Country filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 6, marginBottom: 8 }}>
+        <TouchableOpacity onPress={() => setCountryFilter('')} style={[s.filterChip, !countryFilter && s.filterActive]}>
+          <Text style={[s.filterText, !countryFilter && { color: '#fff' }]}>All Countries</Text>
+        </TouchableOpacity>
+        {[
+          { code: 'US', flag: '🇺🇸' }, { code: 'UK', flag: '🇬🇧' }, { code: 'CA', flag: '🇨🇦' },
+          { code: 'AU', flag: '🇦🇺' }, { code: 'NG', flag: '🇳🇬' }, { code: 'GH', flag: '🇬🇭' },
+          { code: 'ZA', flag: '🇿🇦' }, { code: 'IN', flag: '🇮🇳' }, { code: 'DE', flag: '🇩🇪' }, { code: 'KE', flag: '🇰🇪' },
+        ].map(c => (
+          <TouchableOpacity key={c.code} onPress={() => setCountryFilter(countryFilter === c.code ? '' : c.code)} style={[s.filterChip, countryFilter === c.code && s.filterActive]}>
+            <Text style={[s.filterText, countryFilter === c.code && { color: '#fff' }]}>{c.flag} {c.code}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {/* State filter */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 6, marginBottom: 10 }}>
