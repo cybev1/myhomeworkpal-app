@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, Activit
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore, useTaskStore } from '@/context/stores';
-import { ordersAPI, bidsAPI, paymentsAPI } from '@/services/api';
+import { ordersAPI, bidsAPI, paymentsAPI, api } from '@/services/api';
 
 const isWeb = Platform.OS === 'web';
 const C = { bg: '#FFFFFF', bgSoft: '#F7F8FC', text: '#1A1D2B', textSoft: '#4A5068', textMuted: '#8B91A8', border: '#E4E7F0', primary: '#4F46E5', primarySoft: '#EEF0FF', accent: '#10B981', accentSoft: '#ECFDF5', gold: '#F59E0B', cyan: '#06B6D4', error: '#EF4444' };
@@ -16,6 +16,7 @@ export default function DashboardScreen() {
   const [myBids, setMyBids] = useState<any[]>([]);
   const [wallet, setWallet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [schools, setSchools] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const isHelper = user?.role === 'helper';
@@ -29,6 +30,7 @@ export default function DashboardScreen() {
         ordersAPI.list().then(r => setOrders(r.data.orders || r.data || [])),
         paymentsAPI.wallet().then(r => setWallet(r.data)),
         isHelper ? bidsAPI.myBids().then(r => setMyBids(r.data.bids || r.data || [])) : Promise.resolve(),
+        isHelper ? api.get('/schools', { params: { limit: 10 } }).then(r => setSchools(r.data.schools || [])) : Promise.resolve(),
       ]);
     } catch {} finally { setLoading(false); }
   };
@@ -139,6 +141,30 @@ export default function DashboardScreen() {
           <Text style={s.cardMeta}>{t.bidsCount || 0} bids · {t.category}</Text>
         </TouchableOpacity>
       ))}
+
+      {/* Schools to target */}
+      {schools.filter(sc => sc.telegramChannel || sc.telegramGroup).length > 0 && (
+        <>
+          <SectionHead title="Schools to Target" action={() => router.push('/schools')} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, marginBottom: 12 }}>
+            {schools.filter(sc => sc.telegramChannel || sc.telegramGroup).slice(0, 8).map(sc => (
+              <TouchableOpacity key={sc.id} onPress={() => {
+                const url = (sc.telegramChannel || sc.telegramGroup);
+                const link = url.startsWith('http') ? url : 'https://t.me/' + url.replace('@', '');
+                if (isWeb) window.open(link, '_blank'); else Linking.openURL(link);
+              }} style={sch.card}>
+                <View style={sch.iconWrap}><Ionicons name="school" size={18} color={C.primary} /></View>
+                <Text style={sch.name} numberOfLines={1}>{sc.shortName || sc.name}</Text>
+                <View style={sch.joinPill}><Ionicons name="paper-plane" size={10} color="#fff" /><Text style={sch.joinText}>Join</Text></View>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity onPress={() => router.push('/schools')} style={[sch.card, { justifyContent: 'center', borderStyle: 'dashed' }]}>
+              <Ionicons name="add" size={22} color={C.primary} />
+              <Text style={[sch.name, { color: C.primary }]}>More</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </>
+      )}
 
       {/* Promote banner */}
       <TouchableOpacity onPress={() => router.push('/promote')} style={s.promoBanner}>
@@ -252,6 +278,14 @@ const StatBox = ({ icon, label, value, color }: any) => (
 const SectionHead = ({ title, count, action }: any) => (
   <View style={s.sectionHeader}><Text style={s.sectionTitle}>{title}{count ? ` (${count})` : ''}</Text>{action && <TouchableOpacity onPress={action}><Text style={s.seeAll}>See All</Text></TouchableOpacity>}</View>
 );
+
+const sch = StyleSheet.create({
+  card: { width: 100, alignItems: 'center', padding: 12, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, gap: 6 },
+  iconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  name: { fontSize: 11, fontWeight: '600', color: C.text, textAlign: 'center' },
+  joinPill: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#0EA5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
+  joinText: { fontSize: 10, fontWeight: '600', color: '#fff' },
+});
 
 const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
