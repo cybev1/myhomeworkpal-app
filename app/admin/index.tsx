@@ -12,6 +12,7 @@ const doConfirm = (msg: string): boolean => isWeb ? window.confirm(msg) : true;
 
 export default function AdminPanel() {
   const router = useRouter();
+  const { logout } = useAuthStore();
   const { user } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -110,7 +111,10 @@ export default function AdminPanel() {
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Ionicons name="arrow-back" size={22} color={C.textSoft} /></TouchableOpacity>
         <Text style={[s.headerTitle, isWeb && { fontFamily: "'Bricolage Grotesque', sans-serif" }]}>Admin Panel</Text>
-        <TouchableOpacity onPress={fetchData} style={s.backBtn}><Ionicons name="refresh" size={20} color={C.textSoft} /></TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <TouchableOpacity onPress={fetchData} style={s.backBtn}><Ionicons name="refresh" size={20} color={C.textSoft} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => { if (isWeb ? window.confirm('Sign out?') : true) { logout(); if (isWeb) window.location.href = '/'; else router.replace('/'); } }} style={s.backBtn}><Ionicons name="log-out-outline" size={20} color={C.error} /></TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
