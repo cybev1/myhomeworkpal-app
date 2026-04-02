@@ -95,31 +95,47 @@ export default function DashboardScreen() {
         )}
       </View>
 
-      {/* ═══ QUICK ACTIONS GRID — the key buttons ═══ */}
+      {/* ═══ QUICK ACTIONS — role-specific, nothing hidden ═══ */}
       <Text style={[s.sectionTitle, { paddingHorizontal: 20 }]}>Quick Actions</Text>
       <View style={s.actionsGrid}>
-        {/* Role-specific primary actions */}
+        {/* ── Student actions ── */}
         {!isHelper && <QA icon="add-circle" label="Post Task" color={C.primary} onPress={() => router.push('/create-task')} />}
         {!isHelper && <QA icon="people" label="Find Experts" color={C.cyan} onPress={() => router.push('/(tabs)/explore')} />}
+        {!isHelper && <QA icon="cash" label="Add Funds" color={C.accent} onPress={() => router.push('/add-funds')} />}
+
+        {/* ── Helper actions ── */}
         {isHelper && <QA icon="search" label="Find Tasks" color={C.primary} onPress={() => router.push('/(tabs)/explore')} />}
         {isHelper && <QA icon="megaphone" label="Promote" color={C.gold} onPress={() => router.push('/promote')} />}
+        {isHelper && <QA icon="school" label="Schools" color={C.cyan} onPress={() => router.push('/schools')} />}
+        {isHelper && <QA icon="cash" label="Withdraw" color={C.accent} onPress={() => router.push('/payment')} />}
 
-        {/* Common actions */}
+        {/* ── Everyone ── */}
         <QA icon="briefcase" label="My Orders" color={C.cyan} onPress={() => router.push('/(tabs)/orders')} />
-        <QA icon="chatbubbles" label="Messages" color={C.accent} onPress={() => router.push('/(tabs)/messages')} />
-        <QA icon="wallet" label={isHelper ? 'Earnings' : 'Wallet'} color="#8B5CF6" onPress={() => router.push('/payment')} />
+        <QA icon="chatbubbles" label="Messages" color="#8B5CF6" onPress={() => router.push('/(tabs)/messages')} />
+        <QA icon="wallet" label="Wallet" color="#8B5CF6" onPress={() => router.push('/payment')} />
         <QA icon="person" label="Profile" color={C.textSoft} onPress={() => router.push('/profile/edit')} />
-
-        {/* Growth */}
-        {isHelper && <QA icon="school" label="Schools" color={C.primary} onPress={() => router.push('/schools')} />}
         <QA icon="paper-plane" label="Telegram" color="#0EA5E9" onPress={() => { if (isWeb) window.open('https://t.me/MyHomeworkPalBot', '_blank'); }} />
         {!user?.verified && <QA icon="flash" label="Go Pro" color={C.gold} onPress={() => router.push('/upgrade')} />}
         <QA icon="help-circle" label="Help" color={C.textMuted} onPress={() => router.push('/help')} />
-
-        {/* Admin */}
-        {isAdmin && <QA icon="settings" label="Admin" color={C.error} onPress={() => router.push('/admin')} />}
-        {isAdmin && <QA icon="school" label="Schools" color={C.cyan} onPress={() => router.push('/schools')} />}
+        <QA icon="document-text" label="Privacy" color={C.textMuted} onPress={() => router.push('/privacy')} />
       </View>
+
+      {/* ── Admin & SuperAdmin tools ── */}
+      {isAdmin && (
+        <>
+          <Text style={[s.sectionTitle, { paddingHorizontal: 20, marginTop: 4 }]}>Admin Tools</Text>
+          <View style={s.actionsGrid}>
+            <QA icon="settings" label="Dashboard" color={C.error} onPress={() => router.push('/admin')} />
+            <QA icon="people" label="Users" color={C.error} onPress={() => router.push('/admin')} />
+            <QA icon="school" label="Schools" color={C.cyan} onPress={() => router.push('/schools')} />
+            <QA icon="paper-plane" label="TG Setup" color="#0EA5E9" onPress={async () => { try { await api.post('/telegram/setup-webhook'); if (isWeb) window.alert('Telegram webhook set!'); } catch (e: any) { if (isWeb) window.alert(e.response?.data?.detail || 'Add TELEGRAM_BOT_TOKEN to Railway first'); } }} />
+            {isSuperAdmin && <QA icon="flash" label="AI Tasks" color="#F97316" onPress={() => router.push('/admin')} />}
+            {isSuperAdmin && <QA icon="construct" label="Settings" color={C.textSoft} onPress={() => router.push('/admin')} />}
+            {isSuperAdmin && <QA icon="trending-up" label="Analytics" color={C.accent} onPress={() => router.push('/admin')} />}
+            {isSuperAdmin && <QA icon="shield" label="Disputes" color={C.error} onPress={() => router.push('/admin')} />}
+          </View>
+        </>
+      )}
 
       {/* Telegram banner for students */}
       {!isHelper && (
