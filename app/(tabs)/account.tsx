@@ -104,6 +104,8 @@ export default function AccountScreen() {
           <MenuItem icon="briefcase-outline" label="Active Orders" onPress={() => router.push('/(tabs)/orders')} />
           <MenuItem icon="paper-plane-outline" label="My Proposals" onPress={() => router.push('/(tabs)/orders')} />
           <MenuItem icon="search-outline" label="Find Work" onPress={() => router.push('/(tabs)/explore')} />
+          <MenuItem icon="megaphone-outline" label="Promote Services" onPress={() => router.push('/promote')} badge="New" color={C.gold} />
+          <MenuItem icon="school-outline" label="Target Schools" onPress={() => router.push('/schools')} />
         </View>
       )}
 
