@@ -219,13 +219,18 @@ export default function DashboardScreen() {
           <Text style={s.emptyDesc}>{isHelper ? 'Check back soon or browse Explore' : 'Post your first task to get started'}</Text>
           {!isHelper && <TouchableOpacity onPress={() => router.push('/create-task')} style={s.emptyBtn}><Text style={s.emptyBtnText}>Post a Task</Text></TouchableOpacity>}
         </View>
-      ) : tasks.slice(0, 4).map((t: any) => (
-        <TouchableOpacity key={t.id} style={s.card} onPress={() => router.push(`/task/${t.id}`)}>
+      ) : tasks.slice(0, 4).map((t: any) => {
+        // In-progress tasks → find matching order and go there
+        const matchingOrder = (t.status === 'in_progress' || t.status === 'assigned') ? orders.find(o => o.taskId === t.id) : null;
+        return (
+        <TouchableOpacity key={t.id} style={s.card} onPress={() => matchingOrder ? router.push(`/order/${matchingOrder.id}`) : router.push(`/task/${t.id}`)}>
           <View style={s.cardTop}><View style={[s.badge, { backgroundColor: `${sc(t.status)}12` }]}><View style={[s.dot, { backgroundColor: sc(t.status) }]} /><Text style={[s.badgeText, { color: sc(t.status) }]}>{(t.status || 'open').replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text></View><Text style={s.amount}>${t.budget}</Text></View>
           <Text style={s.cardTitle}>{t.title}</Text>
           <Text style={s.cardMeta}>{t.bidsCount || 0} bids · {t.category}</Text>
+          {matchingOrder && <View style={s.hint}><Ionicons name="open" size={12} color={C.primary} /><Text style={s.hintText}>Tap to open order workspace</Text></View>}
         </TouchableOpacity>
-      ))}
+        );
+      })}
 
       {/* Helper promote banner */}
       {isHelper && (

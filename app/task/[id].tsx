@@ -22,6 +22,7 @@ export default function TaskDetailScreen() {
   const [task, setTask] = useState<any>(null);
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [linkedOrder, setLinkedOrder] = useState<any>(null);
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [bidMessage, setBidMessage] = useState('');
@@ -159,6 +160,17 @@ export default function TaskDetailScreen() {
           <Ionicons name="share-outline" size={20} color={C.textSoft} />
         </TouchableOpacity>
       </View>
+
+      {linkedOrder && (
+        <TouchableOpacity onPress={() => router.push('/order/' + linkedOrder.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 20, marginTop: 12, padding: 14, backgroundColor: '#EEF0FF', borderRadius: 12, borderWidth: 1, borderColor: '#4F46E520' }}>
+          <Ionicons name="briefcase" size={20} color="#4F46E5" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1D2B' }}>Order in progress</Text>
+            <Text style={{ fontSize: 12, color: '#4A5068' }}>Tap to open the order workspace — chat, deliver, and track</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={18} color="#4F46E5" />
+        </TouchableOpacity>
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={s.section}>

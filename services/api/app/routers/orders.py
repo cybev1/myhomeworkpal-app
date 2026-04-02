@@ -90,6 +90,13 @@ async def _complete_order(order, db, auto=False):
     order.status = "completed"
     order.completed_at = datetime.utcnow()
 
+    # Update task status
+    if order.task_id:
+        task_result = await db.execute(select(Task).where(Task.id == order.task_id))
+        task = task_result.scalar_one_or_none()
+        if task:
+            task.status = "completed"
+
     # Calculate platform fee
     fee = round(order.amount * cfg["fee"] / 100, 2)
     helper_payout = round(order.amount - fee, 2)
@@ -190,6 +197,13 @@ async def create_order(req: CreateOrderRequest, user: User = Depends(get_current
 
     payment = Payment(amount=req.amount, status="held", order_id=order.id, payer_id=user.id, payee_id=req.helper_id)
     db.add(payment)
+
+    # Update task status to in_progress
+    if req.task_id:
+        task_result = await db.execute(select(Task).where(Task.id == req.task_id))
+        task = task_result.scalar_one_or_none()
+        if task:
+            task.status = "in_progress"
 
     cfg = await get_settings(db)
     conv_id = await get_or_create_conversation(user.id, req.helper_id, db)
