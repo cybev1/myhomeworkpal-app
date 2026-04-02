@@ -78,7 +78,7 @@ export default function OrderWorkspace() {
   const handleDeliver = async () => {
     if (!await doConfirm('Mark this order as delivered? The student will be notified to review.')) return;
     setActing(true);
-    try { await ordersAPI.deliver(id as string, new FormData()); alert('Delivered!', 'The student will review your work.'); fetchOrder(); }
+    try { await ordersAPI.deliver(id as string); alert('Delivered!', 'The student will review your work.'); fetchOrder(); }
     catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); } finally { setActing(false); }
   };
 

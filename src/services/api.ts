@@ -140,10 +140,8 @@ export const ordersAPI = {
   create: (data: any) => api.post('/orders', data),
   list: (params?: any) => api.get('/orders', { params }),
   get: (id: string) => api.get(`/orders/${id}`),
-  deliver: (id: string, formData: FormData) =>
-    api.post(`/orders/${id}/deliver`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  deliver: (id: string, data?: any) =>
+    api.post(`/orders/${id}/deliver`, data || {}),
   approve: (id: string) => api.post(`/orders/${id}/approve`),
   requestRevision: (id: string, data: { message: string }) =>
     api.post(`/orders/${id}/revision`, data),

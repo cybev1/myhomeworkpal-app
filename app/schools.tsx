@@ -105,13 +105,23 @@ export default function SchoolsDirectory() {
                 </TouchableOpacity>
               )}
             </View>
-            {school.telegramGroup ? (
-              <TouchableOpacity onPress={() => Linking.openURL(school.telegramGroup)} style={s.joinBtn}>
-                <Text style={s.joinText}>Join</Text>
+            {(school.telegramChannel || school.telegramGroup) ? (
+              <TouchableOpacity onPress={() => {
+                const url = school.telegramGroup || school.telegramChannel;
+                const link = url.startsWith('http') ? url : 'https://t.me/' + url.replace('@', '');
+                if (isWeb) window.open(link, '_blank'); else Linking.openURL(link);
+              }} style={s.joinBtn}>
+                <Ionicons name="paper-plane" size={12} color="#fff" />
+                <Text style={[s.joinText, { color: '#fff' }]}>Join</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={[s.joinBtn, { backgroundColor: C.bgSoft, borderColor: C.border }]}>
-                <Text style={[s.joinText, { color: C.textMuted }]}>Add</Text>
+              <TouchableOpacity onPress={() => {
+                const ch = isWeb ? window.prompt('Add Telegram channel for ' + school.name + ':') : '';
+                if (ch) {
+                  api.post('/schools/suggest', { name: school.name, telegram_channel: ch, country: school.country, city: school.city, state: school.state }).catch(() => {});
+                }
+              }} style={[s.joinBtn, { backgroundColor: C.bgSoft, borderColor: C.border }]}>
+                <Text style={[s.joinText, { color: C.textMuted }]}>Add TG</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -143,6 +153,6 @@ const s = StyleSheet.create({
   schoolMeta: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   tgLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   tgLinkText: { fontSize: 11, color: C.cyan, fontWeight: '500' },
-  joinBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: C.accentSoft, borderWidth: 1, borderColor: '#D1FAE5' },
+  joinBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#0EA5E9', borderWidth: 1, borderColor: '#0EA5E9' },
   joinText: { fontSize: 12, fontWeight: '600', color: C.accent },
 });

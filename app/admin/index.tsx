@@ -217,7 +217,7 @@ export default function AdminPanel() {
           {tab === 'tasks' && (
             <>
               {tasks.map(t => (
-                <View key={t.id} style={s.taskCard}>
+                <TouchableOpacity key={t.id} style={s.taskCard} onPress={() => router.push('/task/' + t.id)}>
                   <View style={{ flex: 1 }}>
                     <Text style={s.taskTitle} numberOfLines={1}>{t.title}</Text>
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -226,8 +226,9 @@ export default function AdminPanel() {
                       <Text style={[s.taskMeta, { color: t.status === 'open' ? C.accent : C.textMuted }]}>{t.status}</Text>
                     </View>
                   </View>
-                  <TouchableOpacity onPress={() => deleteTask(t.id)} style={{ padding: 8 }}><Ionicons name="trash-outline" size={18} color={C.error} /></TouchableOpacity>
-                </View>
+                  <TouchableOpacity onPress={() => { setAiTaskId(t.id); setTab('ai'); }} style={{ padding: 6 }}><Ionicons name="flash-outline" size={16} color="#F97316" /></TouchableOpacity>
+                  <TouchableOpacity onPress={(e) => { e.stopPropagation(); deleteTask(t.id); }} style={{ padding: 6 }}><Ionicons name="trash-outline" size={16} color={C.error} /></TouchableOpacity>
+                </TouchableOpacity>
               ))}
             </>
           )}
@@ -348,15 +349,27 @@ export default function AdminPanel() {
                       <Text style={s.taskTitle}>{sc.name}</Text>
                       <Text style={{ fontSize: 10, color: C.textMuted, backgroundColor: C.bgSoft, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>{sc.country}</Text>
                     </View>
-                    <Text style={s.taskMeta}>{sc.shortName} · {sc.city}, {sc.state} {sc.telegramChannel ? ' · ' + sc.telegramChannel : ''}</Text>
+                    <Text style={s.taskMeta}>{sc.shortName} · {sc.city}, {sc.state}</Text>
+                    {sc.telegramChannel ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                        <Ionicons name="paper-plane" size={12} color="#0EA5E9" />
+                        <Text style={{ fontSize: 12, color: '#0EA5E9', fontWeight: '500' }}>{sc.telegramChannel}</Text>
+                        <TouchableOpacity onPress={() => {
+                          const url = sc.telegramChannel.startsWith('http') ? sc.telegramChannel : 'https://t.me/' + sc.telegramChannel.replace('@', '');
+                          if (isWeb) window.open(url, '_blank');
+                        }} style={{ backgroundColor: '#E0F2FE', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginLeft: 4 }}>
+                          <Text style={{ fontSize: 10, fontWeight: '600', color: '#0284C7' }}>Join</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
                   </View>
                   <TouchableOpacity onPress={async () => {
-                    const channel = isWeb ? window.prompt('Telegram channel (e.g. @schoolchannel):') : '';
-                    if (channel) {
-                      try { await api.patch('/schools/' + sc.id, { name: sc.name, telegram_channel: channel }); alert('Updated', 'Channel added'); fetchData(); }
+                    const channel = isWeb ? window.prompt('Enter Telegram channel/group (e.g. @UCLAstudents or https://t.me/UCLAstudents):', sc.telegramChannel || '') : '';
+                    if (channel !== null && channel !== undefined) {
+                      try { await api.patch('/schools/' + sc.id, { name: sc.name, telegram_channel: channel || null }); alert('Updated', channel ? 'Channel: ' + channel : 'Channel removed'); fetchData(); }
                       catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
                     }
-                  }} style={{ padding: 4 }}><Ionicons name="paper-plane-outline" size={16} color={C.cyan} /></TouchableOpacity>
+                  }} style={{ padding: 4 }}><Ionicons name={sc.telegramChannel ? "create-outline" : "add-circle-outline"} size={16} color={sc.telegramChannel ? C.primary : C.cyan} /></TouchableOpacity>
                   <TouchableOpacity onPress={async () => {
                     if (!doConfirm('Delete ' + sc.name + '?')) return;
                     try { await api.delete('/schools/' + sc.id); fetchData(); } catch {}
