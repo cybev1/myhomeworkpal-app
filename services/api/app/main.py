@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from app.routers import auth, tasks, bids, orders, payments, chat, services, feed, users, admin
+from app.routers import auth, tasks, bids, orders, payments, chat, services, feed, users, admin, telegram, schools
 from app.models.database import init_db
 
 @asynccontextmanager
@@ -74,6 +74,8 @@ def mount_all(router_or_app):
     router_or_app.include_router(feed.router, prefix="/feed", tags=["Feed"])
     router_or_app.include_router(users.router, prefix="/users", tags=["Users"])
     router_or_app.include_router(admin.router, prefix="/admin", tags=["Admin"])
+    router_or_app.include_router(telegram.router, prefix="/telegram", tags=["Telegram"])
+    router_or_app.include_router(schools.router, prefix="/schools", tags=["Schools"])
 
 # Mount at root level: /auth/login, /tasks, etc.
 mount_all(app)

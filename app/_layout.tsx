@@ -68,6 +68,7 @@ export default function RootLayout() {
         <Stack.Screen name="privacy" options={{ presentation: 'modal' }} />
         <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />
         <Stack.Screen name="help" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="schools" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

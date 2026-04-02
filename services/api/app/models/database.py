@@ -236,6 +236,37 @@ class Follow(Base):
     following_id = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+# ═══════════════════════════════════════
+# SCHOOLS & TELEGRAM CHANNELS
+# ═══════════════════════════════════════
+class School(Base):
+    __tablename__ = "schools"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    name = Column(String, nullable=False)
+    short_name = Column(String)  # e.g. "MIT", "UCLA"
+    state = Column(String)
+    city = Column(String)
+    country = Column(String, default="US")
+    type = Column(String, default="university")  # university, college, high_school, community_college
+    telegram_channel = Column(String)  # @channel_name or https://t.me/channel
+    telegram_group = Column(String)    # study group link
+    student_count = Column(Integer, default=0)
+    website = Column(String)
+    verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class TelegramUser(Base):
+    __tablename__ = "telegram_users"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    telegram_id = Column(String, unique=True, nullable=False)  # Telegram user ID
+    telegram_username = Column(String)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)  # linked MHP account
+    chat_id = Column(String)  # for sending messages
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # ═══════════════════════════════════════
 # PLATFORM SETTINGS (admin-adjustable)
 # ═══════════════════════════════════════

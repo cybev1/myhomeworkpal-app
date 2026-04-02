@@ -128,6 +128,8 @@ export default function AccountScreen() {
         <MenuItem icon="help-circle-outline" label="Help Center" onPress={() => router.push('/help')} />
         <MenuItem icon="document-outline" label="Terms & Privacy" onPress={() => router.push('/privacy')} />
         <MenuItem icon="chatbubble-outline" label="Contact Support" onPress={() => router.push('/help')} />
+        <MenuItem icon="school-outline" label="Schools Directory" onPress={() => router.push('/schools')} />
+        <MenuItem icon="paper-plane-outline" label="Telegram Bot" onPress={() => { if (isWeb) window.open('https://t.me/MyHomeworkPalBot', '_blank'); }} />
       </View>
 
       <TouchableOpacity onPress={handleLogout} style={s.logoutBtn}>
