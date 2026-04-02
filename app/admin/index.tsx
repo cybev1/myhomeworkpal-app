@@ -18,7 +18,15 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'overview' | 'users' | 'tasks' | 'settings'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'tasks' | 'settings' | 'ai' | 'schools'>('overview');
+  const [aiOutput, setAiOutput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiTaskId, setAiTaskId] = useState('');
+  const [aiStyle, setAiStyle] = useState('student');
+  const [aiLevel, setAiLevel] = useState('3');
+  const [aiInstructions, setAiInstructions] = useState('');
+  const [aiStatus, setAiStatus] = useState<any>(null);
+  const [schoolsList, setSchoolsList] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [editingSettings, setEditingSettings] = useState<any>({});
   const [search, setSearch] = useState('');
@@ -36,6 +44,8 @@ export default function AdminPanel() {
       ]);
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
       try { const sr = await api.get('/admin/settings'); setSettings(sr.data); setEditingSettings(sr.data); } catch {}
+      try { const ar = await api.get('/ai/status'); setAiStatus(ar.data); } catch {}
+      try { const scr = await api.get('/schools', { params: { limit: 100 } }); setSchoolsList(scr.data.schools || []); } catch {}
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data.users || []);
       if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data.tasks || []);
     } catch {} finally { setLoading(false); }
@@ -119,12 +129,21 @@ export default function AdminPanel() {
 
       {/* Tabs */}
       <View style={s.tabs}>
-        {(['overview', 'users', 'tasks', 'settings'] as const).map(t => (
-          <TouchableOpacity key={t} onPress={() => setTab(t)} style={[s.tab, tab === t && s.tabActive]}>
-            <Ionicons name={t === 'overview' ? 'stats-chart' : t === 'users' ? 'people' : t === 'tasks' ? 'briefcase' : 'settings'} size={16} color={tab === t ? C.primary : C.textMuted} />
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
-          </TouchableOpacity>
-        ))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+          {[
+            { key: 'overview', icon: 'stats-chart', label: 'Overview' },
+            { key: 'users', icon: 'people', label: 'Users' },
+            { key: 'tasks', icon: 'briefcase', label: 'Tasks' },
+            { key: 'ai', icon: 'flash', label: 'AI' },
+            { key: 'schools', icon: 'school', label: 'Schools' },
+            { key: 'settings', icon: 'settings', label: 'Settings' },
+          ].map(t => (
+            <TouchableOpacity key={t.key} onPress={() => setTab(t.key as any)} style={[s.tab, tab === t.key && s.tabActive]}>
+              <Ionicons name={t.icon as any} size={16} color={tab === t.key ? C.primary : C.textMuted} />
+              <Text style={[s.tabText, tab === t.key && s.tabTextActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {loading && !stats ? (
@@ -212,6 +231,110 @@ export default function AdminPanel() {
               ))}
             </>
           )}
+          {/* Telegram + Schools quick actions (overview) */}
+          {tab === 'overview' && (
+            <>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                <TouchableOpacity onPress={async () => { try { await api.post('/telegram/setup-webhook'); alert('Done', 'Telegram webhook registered!'); } catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed — add TELEGRAM_BOT_TOKEN to Railway'); } }} style={[s.actionChip, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}>
+                  <Ionicons name="paper-plane" size={14} color="#0284C7" /><Text style={[s.actionText, { color: '#0284C7' }]}>Setup Telegram Bot</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={async () => { try { const r = await api.post('/schools/seed'); alert('Done', r.data.message); fetchData(); } catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); } }} style={[s.actionChip, { backgroundColor: C.accentSoft, borderColor: '#D1FAE5' }]}>
+                  <Ionicons name="school" size={14} color={C.accent} /><Text style={[s.actionText, { color: C.accent }]}>Seed 50 US Schools</Text>
+                </TouchableOpacity>
+              </View>
+              {aiStatus && (
+                <View style={[s.statCard, { width: '100%', marginTop: 10, borderColor: aiStatus.available ? '#D1FAE5' : '#FECACA' }]}>
+                  <Ionicons name="flash" size={20} color={aiStatus.available ? C.accent : C.error} />
+                  <Text style={s.statLabel}>AI: {aiStatus.deepseek ? 'DeepSeek' : ''}{aiStatus.openai ? ' OpenAI' : ''}{aiStatus.claude ? ' Claude' : ''}{!aiStatus.available ? 'Not configured' : ' ready'}</Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* AI Tab */}
+          {tab === 'ai' && (
+            <>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 }}>AI Task Completion</Text>
+              <Text style={{ fontSize: 13, color: C.textMuted, marginBottom: 16 }}>Generate humanized homework solutions when no helpers are available. Output looks like real student work.</Text>
+
+              <Text style={s.settingLabel}>Task ID (copy from Tasks tab)</Text>
+              <TextInput value={aiTaskId} onChangeText={setAiTaskId} placeholder="paste-task-id-here" style={[s.settingInput, { width: '100%', textAlign: 'left', paddingHorizontal: 12, marginBottom: 12 }]} />
+
+              <Text style={s.settingLabel}>Writing Style</Text>
+              <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+                {['student', 'professional', 'casual'].map(st => (
+                  <TouchableOpacity key={st} onPress={() => setAiStyle(st)} style={[s.filterChip, aiStyle === st && s.filterChipActive]}>
+                    <Text style={[s.filterText, aiStyle === st && { color: '#fff' }]}>{st}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.settingLabel}>Humanization Level (1-5)</Text>
+              <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+                {['1', '2', '3', '4', '5'].map(l => (
+                  <TouchableOpacity key={l} onPress={() => setAiLevel(l)} style={[s.filterChip, aiLevel === l && s.filterChipActive]}>
+                    <Text style={[s.filterText, aiLevel === l && { color: '#fff' }]}>{l}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.settingLabel}>Extra Instructions (optional)</Text>
+              <TextInput value={aiInstructions} onChangeText={setAiInstructions} placeholder="e.g. Focus on chapter 5, use APA format..." multiline style={[s.settingInput, { width: '100%', textAlign: 'left', paddingHorizontal: 12, height: 60, marginBottom: 12 }]} />
+
+              <TouchableOpacity onPress={async () => {
+                if (!aiTaskId) { alert('Required', 'Enter a task ID'); return; }
+                setAiLoading(true); setAiOutput('');
+                try {
+                  const { data } = await api.post('/ai/complete-task', { task_id: aiTaskId, style: aiStyle, humanize_level: parseInt(aiLevel), instructions: aiInstructions || undefined });
+                  setAiOutput(data.output);
+                  alert('Generated', data.wordCount + ' words via ' + data.provider);
+                } catch (e: any) { alert('Error', e.response?.data?.detail || 'Generation failed'); }
+                finally { setAiLoading(false); }
+              }} disabled={aiLoading} style={s.saveBtn}>
+                {aiLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="flash" size={18} color="#fff" /><Text style={s.saveBtnText}>Generate Solution</Text></>}
+              </TouchableOpacity>
+
+              {aiOutput ? (
+                <View style={[s.settingCard, { marginTop: 12 }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: C.text }}>Generated Output</Text>
+                    <TouchableOpacity onPress={() => { if (isWeb) { navigator.clipboard.writeText(aiOutput); alert('Copied', 'Output copied to clipboard'); } }}>
+                      <Text style={{ fontSize: 12, color: C.primary, fontWeight: '600' }}>Copy</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={{ fontSize: 14, color: C.textSoft, lineHeight: 22 }} selectable>{aiOutput}</Text>
+                </View>
+              ) : null}
+            </>
+          )}
+
+          {/* Schools Tab */}
+          {tab === 'schools' && (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: C.text }}>Schools ({schoolsList.length})</Text>
+                <TouchableOpacity onPress={async () => { try { const r = await api.post('/schools/seed'); alert('Done', r.data.message); fetchData(); } catch (e: any) { alert('Error', e.response?.data?.detail || 'Already seeded'); } }} style={[s.actionChip, { backgroundColor: C.accentSoft, borderColor: '#D1FAE5' }]}>
+                  <Ionicons name="add-circle" size={14} color={C.accent} /><Text style={[s.actionText, { color: C.accent }]}>Seed Schools</Text>
+                </TouchableOpacity>
+              </View>
+              {schoolsList.map((sc: any) => (
+                <View key={sc.id} style={s.taskCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.taskTitle}>{sc.name}</Text>
+                    <Text style={s.taskMeta}>{sc.shortName} · {sc.city}, {sc.state} {sc.telegramChannel ? '· ' + sc.telegramChannel : ''}</Text>
+                  </View>
+                  <TouchableOpacity onPress={async () => {
+                    const channel = isWeb ? window.prompt('Telegram channel (e.g. @schoolchannel):') : '';
+                    if (channel) {
+                      try { await api.patch('/schools/' + sc.id, { name: sc.name, telegram_channel: channel }); alert('Updated', 'Channel added'); fetchData(); }
+                      catch (e: any) { alert('Error', e.response?.data?.detail || 'Failed'); }
+                    }
+                  }} style={{ padding: 8 }}><Ionicons name="paper-plane-outline" size={16} color={C.cyan} /></TouchableOpacity>
+                </View>
+              ))}
+            </>
+          )}
+
           {/* Settings tab */}
           {tab === 'settings' && settings && (
             <>

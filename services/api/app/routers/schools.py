@@ -98,6 +98,21 @@ async def delete_school(school_id: str, user: User = Depends(get_current_user), 
     await db.delete(school)
     return {"message": "School deleted"}
 
+
+
+# ═══ Helper/User: suggest a school (prevents duplicates) ═══
+@router.post("/suggest")
+async def suggest_school(req: CreateSchoolRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # Check for duplicate by name
+    existing = await db.execute(select(School).where(School.name.ilike(f"%{req.name}%")))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="This school already exists in the directory")
+    school = School(**req.model_dump(), verified=False)
+    db.add(school)
+    await db.flush()
+    await db.refresh(school)
+    return {"id": school.id, "name": school.name, "message": "School suggested! Admin will verify."}
+
 # Seed US schools (run once via admin)
 @router.post("/seed")
 async def seed_schools(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
